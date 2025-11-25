@@ -77,51 +77,6 @@ namespace Inventory_manager.Services
 			await _db.InventoryReceipts.AddAsync(receipt);
 			await _db.SaveChangesAsync();
 		}
-
-		// Xuất kho
-		public bool CreateIssue(ReceiptRequestModels request)
-		{
-			var issue = new InventoryIssue
-			{
-				IssueCode = $"PX{DateTime.Now:yyyyMMddHHmmss}",
-				WarehouseId = request.WarehouseId,
-				CreatedBy = request.CreatedBy,
-				CreatedAt = DateTime.Now
-			};
-
-			foreach (var item in request.Items)
-			{
-				var stock = _db.Stocks.FirstOrDefault(s => s.WarehouseId == request.WarehouseId && s.MaterialId == item.MaterialId);
-				if (stock == null || stock.Quantity < item.Quantity)
-					return false; // Không đủ tồn
-
-				issue.InventoryIssueDetails.Add(new InventoryIssueDetail
-				{
-					MaterialId = item.MaterialId,
-					Quantity = item.Quantity,
-					UnitPrice = item.UnitPrice
-				});
-
-				stock.Quantity -= item.Quantity;
-				stock.LastUpdated = DateTime.Now;
-
-				_db.StockLogs.Add(new StockLog
-				{
-					MaterialId = item.MaterialId,
-					WarehouseId = request.WarehouseId,
-					RefType = 2,
-					RefId = issue.IssueId,
-					QuantityChange = -item.Quantity,
-					FinalQuantity = stock.Quantity,
-					CreatedBy = request.CreatedBy,
-					CreatedAt = DateTime.Now
-				});
-			}
-
-			_db.InventoryIssues.Add(issue);
-			_db.SaveChanges();
-			return true;
-		}
 		public async Task<List<WarehouseMaterialRespone>> LoadMaterials(int? id)
 		{
 			var materials = await _db.Warehouses.AsNoTracking().Where(x => !id.HasValue || x.WarehouseId == id.Value)
@@ -329,6 +284,238 @@ namespace Inventory_manager.Services
 				return true;
 			}
 			catch (Exception ex)
+			{
+				throw;
+			}
+		}
+		// Xuất kho
+		public async Task<bool> CreateIssue(IssueRequestModels request)
+		{
+			if (request == null) return false;
+
+			var issue = new InventoryIssue
+			{
+				IssueCode = $"PX{DateTime.Now:yyyyMMddHHmmss}",
+				WarehouseId = request.WarehouseId,
+				CreatedBy = request.CreatedBy,
+				CreatedAt = DateTime.Now
+			};
+
+			foreach (var item in request.Items)
+			{
+				issue.InventoryIssueDetails.Add(new InventoryIssueDetail
+				{
+					MaterialId = item.MaterialId,
+					Quantity = item.Quantity,
+					UnitPrice = item.UnitPrice
+				});
+
+				// Trừ tồn kho
+				var stock = await _db.Stocks
+					.FirstOrDefaultAsync(s => s.WarehouseId == request.WarehouseId &&
+											  s.MaterialId == item.MaterialId);
+
+				if (stock == null || stock.Quantity < item.Quantity)
+					throw new Exception("Tồn kho không đủ để xuất");
+
+				stock.Quantity -= item.Quantity;
+				stock.LastUpdated = DateTime.Now;
+
+				// Log xuất kho
+				await _db.StockLogs.AddAsync(new StockLog
+				{
+					MaterialId = item.MaterialId,
+					WarehouseId = request.WarehouseId,
+					RefType = 2,             // 2 = Phiếu xuất
+					RefId = issue.IssueId,
+					QuantityChange = -item.Quantity,
+					FinalQuantity = stock.Quantity,
+					CreatedBy = request.CreatedBy,
+					CreatedAt = DateTime.Now
+				});
+			}
+
+			await _db.InventoryIssues.AddAsync(issue);
+			await _db.SaveChangesAsync();
+
+			return true;
+		}
+		public async Task<List<ListIssueResponseMessage>> GetIssueAsync()
+		{
+			var result = new List<ListIssueResponseMessage>();
+
+			try
+			{
+				var query = await _db.InventoryIssues.AsNoTracking()
+					.Include(x => x.CreatedByNavigation)
+					.Select(x => new ListIssueResponseMessage
+					{
+						CreatedBy = x.CreatedByNavigation.FullName,
+						IssueID = x.IssueId,
+						WarehouseDescription = x.Description,
+						WarehouseID = x.WarehouseId,
+						WarehouseName = x.Warehouse.WarehouseName,
+						CreatedAt = x.CreatedAt,
+					}).ToListAsync();
+
+				foreach (var item in query)
+				{
+					var total = await _db.InventoryIssueDetails
+						.Where(x => x.IssueId == item.IssueID)
+						.SumAsync(x => x.Quantity);
+
+					item.TotalMaterial = (decimal)total;
+				}
+
+				return query;
+			}
+			catch (Exception ex)
+			{
+				throw new Exception(ex.Message);
+			}
+		}
+		public async Task<bool> UpdateIssue(IssueUpdateRequestModels request)
+		{
+			if (request == null) return false;
+
+			try
+			{
+				var issue = await _db.InventoryIssues
+					.Include(x => x.InventoryIssueDetails)
+					.FirstOrDefaultAsync(x => x.IssueId == request.IssueId);
+
+				if (issue == null) return false;
+
+				// 1. Hoàn kho theo chi tiết cũ (hoàn = cộng lại)
+				foreach (var old in issue.InventoryIssueDetails)
+				{
+					var stock = await _db.Stocks
+						.FirstOrDefaultAsync(s => s.WarehouseId == issue.WarehouseId &&
+												  s.MaterialId == old.MaterialId);
+
+					if (stock != null)
+					{
+						stock.Quantity += old.Quantity;
+						stock.LastUpdated = DateTime.Now;
+					}
+
+					// Log hoàn kho
+					await _db.StockLogs.AddAsync(new StockLog
+					{
+						MaterialId = old.MaterialId,
+						WarehouseId = issue.WarehouseId,
+						RefType = 2,
+						RefId = issue.IssueId,
+						QuantityChange = old.Quantity,
+						FinalQuantity = stock?.Quantity ?? 0,
+						CreatedBy = issue.CreatedBy,
+						CreatedAt = DateTime.Now
+					});
+				}
+
+				// 2. Xóa chi tiết cũ
+				_db.InventoryIssueDetails.RemoveRange(issue.InventoryIssueDetails);
+
+				var newDetails = new List<InventoryIssueDetail>();
+
+				// 3. Thêm chi tiết mới + trừ kho theo chi tiết mới
+				foreach (var item in request.Items)
+				{
+					newDetails.Add(new InventoryIssueDetail
+					{
+						IssueId = issue.IssueId,
+						MaterialId = item.MaterialId,
+						Quantity = item.Quantity,
+						UnitPrice = item.UnitPrice
+					});
+
+					var stock = await _db.Stocks
+						.FirstOrDefaultAsync(s => s.WarehouseId == issue.WarehouseId &&
+												  s.MaterialId == item.MaterialId);
+
+					if (stock == null || stock.Quantity < item.Quantity)
+						throw new Exception("Tồn kho không đủ để xuất");
+
+					stock.Quantity -= item.Quantity;
+					stock.LastUpdated = DateTime.Now;
+
+					// Log xuất mới
+					await _db.StockLogs.AddAsync(new StockLog
+					{
+						MaterialId = item.MaterialId,
+						WarehouseId = issue.WarehouseId,
+						RefType = 2,
+						RefId = issue.IssueId,
+						QuantityChange = -item.Quantity,
+						FinalQuantity = stock.Quantity,
+						CreatedBy = issue.CreatedBy,
+						CreatedAt = DateTime.Now
+					});
+				}
+
+				issue.InventoryIssueDetails = newDetails;
+
+				await _db.SaveChangesAsync();
+				return true;
+			}
+			catch
+			{
+				throw;
+			}
+		}
+		public async Task<bool> DeleteIssue(List<int>? Ids)
+		{
+			if (Ids == null || !Ids.Any()) return false;
+
+			try
+			{
+				foreach (var id in Ids)
+				{
+					var issue = await _db.InventoryIssues
+						.Include(x => x.InventoryIssueDetails)
+						.FirstOrDefaultAsync(x => x.IssueId == id);
+
+					if (issue == null) continue;
+
+					// 1. Hoàn kho theo từng detail
+					foreach (var item in issue.InventoryIssueDetails)
+					{
+						var stock = await _db.Stocks
+							.FirstOrDefaultAsync(s =>
+								s.WarehouseId == issue.WarehouseId &&
+								s.MaterialId == item.MaterialId);
+
+						if (stock != null)
+						{
+							stock.Quantity += item.Quantity;
+							stock.LastUpdated = DateTime.Now;
+						}
+
+						// Log hoàn kho
+						await _db.StockLogs.AddAsync(new StockLog
+						{
+							MaterialId = item.MaterialId,
+							WarehouseId = issue.WarehouseId,
+							RefType = 2,
+							RefId = issue.IssueId,
+							QuantityChange = item.Quantity,
+							FinalQuantity = stock?.Quantity ?? 0,
+							CreatedBy = issue.CreatedBy,
+							CreatedAt = DateTime.Now
+						});
+					}
+
+					// 2. Xóa detail
+					_db.InventoryIssueDetails.RemoveRange(issue.InventoryIssueDetails);
+
+					// 3. Xóa phiếu
+					_db.InventoryIssues.Remove(issue);
+				}
+
+				await _db.SaveChangesAsync();
+				return true;
+			}
+			catch
 			{
 				throw;
 			}

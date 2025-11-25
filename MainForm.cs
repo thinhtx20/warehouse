@@ -66,10 +66,11 @@ namespace Inventory_manager
 			btnLogout.ForeColor = Color.White;
 			btnLogout.Location = new Point(711, 12);
 			btnLogout.Name = "btnLogout";
-			btnLogout.Size = new Size(100, 23);
+			btnLogout.Size = new Size(100, 32);
 			btnLogout.TabIndex = 1;
 			btnLogout.Text = "Đăng xuất";
 			btnLogout.UseVisualStyleBackColor = false;
+			btnLogout.Click += btnLogout_Click;
 			// 
 			// btnReceipt
 			// 
@@ -119,7 +120,7 @@ namespace Inventory_manager
 			// grbMain
 			// 
 			grbMain.Controls.Add(dgvMaterials);
-			grbMain.Location = new Point(20, 282);
+			grbMain.Location = new Point(20, 270);
 			grbMain.Name = "grbMain";
 			grbMain.Size = new Size(805, 377);
 			grbMain.TabIndex = 7;
@@ -128,16 +129,16 @@ namespace Inventory_manager
 			// 
 			// dgvMaterials
 			// 
-			dgvMaterials.AllowUserToOrderColumns = true;
 			dgvMaterials.AutoGenerateColumns = false;
 			dgvMaterials.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 			dgvMaterials.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			dgvMaterials.Columns.AddRange(new DataGridViewColumn[] { STT, materialIdDataGridViewTextBoxColumn, materialNameDataGridViewTextBoxColumn, unitDataGridViewTextBoxColumn, quantityDataGridViewTextBoxColumn, categoryNameDataGridViewTextBoxColumn });
 			dgvMaterials.DataSource = materialResponeMessageBindingSource;
-			dgvMaterials.Location = new Point(6, 19);
+			dgvMaterials.Dock = DockStyle.Fill;
+			dgvMaterials.Location = new Point(3, 23);
 			dgvMaterials.Name = "dgvMaterials";
 			dgvMaterials.RowHeadersWidth = 51;
-			dgvMaterials.Size = new Size(769, 331);
+			dgvMaterials.Size = new Size(799, 351);
 			dgvMaterials.TabIndex = 0;
 			// 
 			// STT
@@ -193,7 +194,7 @@ namespace Inventory_manager
 			// MainForm
 			// 
 			BackColor = Color.FromArgb(240, 248, 255);
-			ClientSize = new Size(862, 711);
+			ClientSize = new Size(863, 683);
 			Controls.Add(grbMain);
 			Controls.Add(grbMenu);
 			Controls.Add(lblWelcome);
@@ -256,5 +257,11 @@ namespace Inventory_manager
 			dgvMaterials.DataSource = _materialData;
 		}
 
+		private void btnLogout_Click(object sender, EventArgs e)
+		{
+			var form = new LoginForm();
+			form.ShowDialog();
+			this.Hide(); // ẩn MainForm
+		}
 	}
 }

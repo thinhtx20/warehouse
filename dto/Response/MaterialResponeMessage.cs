@@ -31,4 +31,23 @@ namespace Inventory_manager.dto.Response
 		public DateTime? CreatedAt {  get; set; }
 
 	}
+	public class ListIssueResponseMessage
+	{
+		public int IssueID { get; set; }
+
+		public string IssueCode { get; set; }
+
+		public string WarehouseName { get; set; }
+
+		public int? WarehouseID { get; set; }
+
+		public string? WarehouseDescription { get; set; }
+
+		public string CreatedBy { get; set; }
+
+		public DateTime? CreatedAt { get; set; }
+
+		public decimal TotalMaterial { get; set; }
+	}
+
 }

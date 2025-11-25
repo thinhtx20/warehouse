@@ -46,5 +46,21 @@ namespace Inventory_manager.Services
 				return null;
 			}
 		}
+		public async Task<List<int>> GetMaterialInIssue(int IssueId)
+		{
+			var lst = new List<int>();
+			if (IssueId == null) return null;
+			try
+			{
+				var lstItem = await _context.InventoryIssueDetails.AsNoTracking()
+					.Where(x => x.IssueId == IssueId).Select(x => x.MaterialId.Value).ToListAsync();
+				lst = lstItem.ToList();
+				return lst;
+			}
+			catch (Exception ex)
+			{
+				return null;
+			}
+		}
 	}
 }
