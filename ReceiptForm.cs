@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 
 namespace Inventory_manager
 {
@@ -24,6 +25,7 @@ namespace Inventory_manager
 		private List<MaterialResponeMessage> _materialData = new List<MaterialResponeMessage>();
 		private List<ListReceiptResponeMessage> _receiptData = new List<ListReceiptResponeMessage>();
 		private List<int> lstIds = new List<int>();
+		private List<int> lstIdMaterial = new List<int>();
 
 		public ReceiptForm(User user)
 		{
@@ -37,7 +39,9 @@ namespace Inventory_manager
 		// hàm load 
 		private async void ReceiptForm_Load(object sender, EventArgs e)
 		{
+			txtDescription.Clear();
 			await LoadMockData();      // đợi dữ liệu load xong // sau đó mới gán cho ComboBox
+
 			LoadDataCombobox();
 			LoadDataGridView();
 		}
@@ -75,6 +79,7 @@ namespace Inventory_manager
 				if (cbWarehouse.SelectedValue is null || string.IsNullOrEmpty(cbWarehouse.SelectedValue.ToString()))
 				{
 					MessageBox.Show("Vui lòng chọn kho", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
 				}
 				var body = new ReceiptRequestModels()
 				{
@@ -147,9 +152,10 @@ namespace Inventory_manager
 			cbWarehouse.ValueMember = "WarehouseId";
 			cbWarehouse.SelectedIndex = 0; // chọn mặc định là item click	
 			var idClick = Convert.ToInt32(dgvListReceipt.Rows[e.RowIndex].Cells["receiptIDDataGridViewTextBoxColumn"].Value);
+			lstIds.Add(idClick);
 			var lstIdMaterial = await _materialServices.GetMaterialInReceipt(idClick);
-			lstIds.AddRange(lstIdMaterial);
-			_materialData = await _materialServices.GetMaterialsAsync(lstIds);
+			lstIdMaterial.AddRange(lstIdMaterial);
+			_materialData = await _materialServices.GetMaterialsAsync(lstIdMaterial);
 			// update gridview 
 			dgvReceipts.DataSource = null;
 			dgvReceipts.DataSource = _materialData;
@@ -162,11 +168,76 @@ namespace Inventory_manager
 
 		private void btnUpdate_Click(object sender, EventArgs e)
 		{
-			if (lstIds.Count > 1)
+			try
 			{
-				MessageBox.Show("Chỉ có thể chỉnh sửa 1 phiếu", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-			}
+				if (lstIds.Count > 1)
+				{
+					MessageBox.Show("Chỉ có thể chỉnh sửa 1 phiếu", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+				if (lstIds == null)
+				{
+					MessageBox.Show("Vui lòng chọn phiếu cần sửa", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+				var body = new ReceiptUpdateRequestModels()
+				{
+					RececiptId = lstIds.First(),
+					WarehouseId = cbWarehouse.SelectedIndex,
+					Items = new List<ReceiptItem>()
+				};
+				foreach (DataGridViewRow row in dgvReceipts.Rows)
+				{
+					if (row.IsNewRow) continue;
 
+					var selected = row.Cells["cbDgvReceiptForm"].Value;
+					if (selected != null && (bool)selected == true)
+					{
+						body.Items.Add(new ReceiptItem()
+						{
+							MaterialId = Convert.ToInt32(row.Cells["materialIdDataGridViewTextBoxColumn"].Value),
+							Quantity = Convert.ToInt32(row.Cells["Quantity"].Value),
+							UnitPrice = Convert.ToDecimal(row.Cells["unitDataGridViewTextBoxColumn"].Value)
+						});
+					}
+				}
+				_inventoryService.UpdateReceipt(body);
+				MessageBox.Show("Cập nhật phiếu thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
+				// load form khi ta
+				ReceiptForm_Load(this, EventArgs.Empty);
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return;
+			}
+		}
+
+		private void btnDelete_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				if (!lstIds.Any())
+				{
+					MessageBox.Show("Vui lòng chọn phiếu cần sửa", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+				_inventoryService.DeleteReceipt(lstIds);
+				MessageBox.Show("Xóa phiếu thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
+				// load form khi ta
+				ReceiptForm_Load(this, EventArgs.Empty);
+			}
+			catch (Exception ex) 
+			{
+				MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return;
+			}
+		}
+
+		private void btnRefresh_Click(object sender, EventArgs e)
+		{
+
+			ReceiptForm_Load(this, EventArgs.Empty);
 		}
 	}
 }

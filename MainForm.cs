@@ -15,7 +15,7 @@ namespace Inventory_manager
 		private Button btnMaterials;
 		private Button btnWarehouses;
 		private readonly MaterialServices _materialServices;
-		private List<MaterialResponeMessage> _materialData= new List<MaterialResponeMessage>(); 
+		private List<MaterialResponeMessage> _materialData = new List<MaterialResponeMessage>();
 		public MainForm(User currentUser)
 		{
 			_currentUser = currentUser;
@@ -36,14 +36,14 @@ namespace Inventory_manager
 			grbMenu = new GroupBox();
 			grbMain = new GroupBox();
 			dgvMaterials = new DataGridView();
-			materialResponeMessageBindingSource = new BindingSource(components);
-			receiptRequestModelsBindingSource = new BindingSource(components);
 			STT = new DataGridViewTextBoxColumn();
 			materialIdDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			materialNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			unitDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			quantityDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			categoryNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+			materialResponeMessageBindingSource = new BindingSource(components);
+			receiptRequestModelsBindingSource = new BindingSource(components);
 			grbMenu.SuspendLayout();
 			grbMain.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)dgvMaterials).BeginInit();
@@ -57,7 +57,7 @@ namespace Inventory_manager
 			lblWelcome.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
 			lblWelcome.Location = new Point(20, 20);
 			lblWelcome.Name = "lblWelcome";
-			lblWelcome.Size = new Size(0, 21);
+			lblWelcome.Size = new Size(0, 28);
 			lblWelcome.TabIndex = 0;
 			// 
 			// btnLogout
@@ -119,7 +119,7 @@ namespace Inventory_manager
 			// grbMain
 			// 
 			grbMain.Controls.Add(dgvMaterials);
-			grbMain.Location = new Point(20, 326);
+			grbMain.Location = new Point(20, 282);
 			grbMain.Name = "grbMain";
 			grbMain.Size = new Size(805, 377);
 			grbMain.TabIndex = 7;
@@ -136,8 +136,51 @@ namespace Inventory_manager
 			dgvMaterials.DataSource = materialResponeMessageBindingSource;
 			dgvMaterials.Location = new Point(6, 19);
 			dgvMaterials.Name = "dgvMaterials";
+			dgvMaterials.RowHeadersWidth = 51;
 			dgvMaterials.Size = new Size(769, 331);
 			dgvMaterials.TabIndex = 0;
+			// 
+			// STT
+			// 
+			STT.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+			STT.HeaderText = "STT";
+			STT.MinimumWidth = 6;
+			STT.Name = "STT";
+			// 
+			// materialIdDataGridViewTextBoxColumn
+			// 
+			materialIdDataGridViewTextBoxColumn.DataPropertyName = "MaterialId";
+			materialIdDataGridViewTextBoxColumn.HeaderText = "ID";
+			materialIdDataGridViewTextBoxColumn.MinimumWidth = 6;
+			materialIdDataGridViewTextBoxColumn.Name = "materialIdDataGridViewTextBoxColumn";
+			// 
+			// materialNameDataGridViewTextBoxColumn
+			// 
+			materialNameDataGridViewTextBoxColumn.DataPropertyName = "MaterialName";
+			materialNameDataGridViewTextBoxColumn.HeaderText = "Tên";
+			materialNameDataGridViewTextBoxColumn.MinimumWidth = 6;
+			materialNameDataGridViewTextBoxColumn.Name = "materialNameDataGridViewTextBoxColumn";
+			// 
+			// unitDataGridViewTextBoxColumn
+			// 
+			unitDataGridViewTextBoxColumn.DataPropertyName = "Unit";
+			unitDataGridViewTextBoxColumn.HeaderText = "Đơn vị";
+			unitDataGridViewTextBoxColumn.MinimumWidth = 6;
+			unitDataGridViewTextBoxColumn.Name = "unitDataGridViewTextBoxColumn";
+			// 
+			// quantityDataGridViewTextBoxColumn
+			// 
+			quantityDataGridViewTextBoxColumn.DataPropertyName = "Quantity";
+			quantityDataGridViewTextBoxColumn.HeaderText = "Số Lượng";
+			quantityDataGridViewTextBoxColumn.MinimumWidth = 6;
+			quantityDataGridViewTextBoxColumn.Name = "quantityDataGridViewTextBoxColumn";
+			// 
+			// categoryNameDataGridViewTextBoxColumn
+			// 
+			categoryNameDataGridViewTextBoxColumn.DataPropertyName = "CategoryName";
+			categoryNameDataGridViewTextBoxColumn.HeaderText = "Danh mục";
+			categoryNameDataGridViewTextBoxColumn.MinimumWidth = 6;
+			categoryNameDataGridViewTextBoxColumn.Name = "categoryNameDataGridViewTextBoxColumn";
 			// 
 			// materialResponeMessageBindingSource
 			// 
@@ -146,42 +189,6 @@ namespace Inventory_manager
 			// receiptRequestModelsBindingSource
 			// 
 			receiptRequestModelsBindingSource.DataSource = typeof(dto.Request.ReceiptRequestModels);
-			// 
-			// STT
-			// 
-			STT.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-			STT.HeaderText = "STT";
-			STT.Name = "STT";
-			// 
-			// materialIdDataGridViewTextBoxColumn
-			// 
-			materialIdDataGridViewTextBoxColumn.DataPropertyName = "MaterialId";
-			materialIdDataGridViewTextBoxColumn.HeaderText = "ID";
-			materialIdDataGridViewTextBoxColumn.Name = "materialIdDataGridViewTextBoxColumn";
-			// 
-			// materialNameDataGridViewTextBoxColumn
-			// 
-			materialNameDataGridViewTextBoxColumn.DataPropertyName = "MaterialName";
-			materialNameDataGridViewTextBoxColumn.HeaderText = "Tên";
-			materialNameDataGridViewTextBoxColumn.Name = "materialNameDataGridViewTextBoxColumn";
-			// 
-			// unitDataGridViewTextBoxColumn
-			// 
-			unitDataGridViewTextBoxColumn.DataPropertyName = "Unit";
-			unitDataGridViewTextBoxColumn.HeaderText = "Đơn vị";
-			unitDataGridViewTextBoxColumn.Name = "unitDataGridViewTextBoxColumn";
-			// 
-			// quantityDataGridViewTextBoxColumn
-			// 
-			quantityDataGridViewTextBoxColumn.DataPropertyName = "Quantity";
-			quantityDataGridViewTextBoxColumn.HeaderText = "Số Lượng";
-			quantityDataGridViewTextBoxColumn.Name = "quantityDataGridViewTextBoxColumn";
-			// 
-			// categoryNameDataGridViewTextBoxColumn
-			// 
-			categoryNameDataGridViewTextBoxColumn.DataPropertyName = "CategoryName";
-			categoryNameDataGridViewTextBoxColumn.HeaderText = "Danh mục";
-			categoryNameDataGridViewTextBoxColumn.Name = "categoryNameDataGridViewTextBoxColumn";
 			// 
 			// MainForm
 			// 
@@ -243,10 +250,11 @@ namespace Inventory_manager
 		{
 			_materialData = await _materialServices.GetMaterialsAsync(null);
 		}
-		private  void LoadDataGridView()
+		private void LoadDataGridView()
 		{
 			dgvMaterials.DataSource = null;
 			dgvMaterials.DataSource = _materialData;
 		}
+
 	}
 }

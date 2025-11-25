@@ -51,6 +51,13 @@
 			btnDelete = new Button();
 			btnRefresh = new Button();
 			dgvReceipts = new DataGridView();
+			cbDgvReceiptForm = new DataGridViewCheckBoxColumn();
+			materialIdDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+			materialNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+			unitDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+			categoryNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+			Quantity = new DataGridViewTextBoxColumn();
+			Column1 = new DataGridViewTextBoxColumn();
 			groupBox1 = new GroupBox();
 			dgvListReceipt = new DataGridView();
 			cbReceipt = new DataGridViewCheckBoxColumn();
@@ -64,13 +71,6 @@
 			listReceiptResponeMessageBindingSource = new BindingSource(components);
 			groupBox2 = new GroupBox();
 			btnBack = new Button();
-			cbDgvReceiptForm = new DataGridViewCheckBoxColumn();
-			materialIdDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-			materialNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-			unitDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-			categoryNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-			Quantity = new DataGridViewTextBoxColumn();
-			Column1 = new DataGridViewTextBoxColumn();
 			((System.ComponentModel.ISupportInitialize)materialResponeMessageBindingSource).BeginInit();
 			((System.ComponentModel.ISupportInitialize)dgvReceipts).BeginInit();
 			groupBox1.SuspendLayout();
@@ -167,6 +167,7 @@
 			btnDelete.Size = new Size(91, 40);
 			btnDelete.TabIndex = 10;
 			btnDelete.Text = "Xóa";
+			btnDelete.Click += btnDelete_Click;
 			// 
 			// btnRefresh
 			// 
@@ -176,6 +177,7 @@
 			btnRefresh.Size = new Size(114, 40);
 			btnRefresh.TabIndex = 11;
 			btnRefresh.Text = "Làm mới";
+			btnRefresh.Click += btnRefresh_Click;
 			// 
 			// dgvReceipts
 			// 
@@ -193,6 +195,63 @@
 			dgvReceipts.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
 			dgvReceipts.Size = new Size(1123, 454);
 			dgvReceipts.TabIndex = 12;
+			// 
+			// cbDgvReceiptForm
+			// 
+			cbDgvReceiptForm.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+			cbDgvReceiptForm.DataPropertyName = "Select";
+			cbDgvReceiptForm.FillWeight = 126.903557F;
+			cbDgvReceiptForm.HeaderText = "Chọn";
+			cbDgvReceiptForm.MinimumWidth = 6;
+			cbDgvReceiptForm.Name = "cbDgvReceiptForm";
+			cbDgvReceiptForm.Resizable = DataGridViewTriState.True;
+			cbDgvReceiptForm.SortMode = DataGridViewColumnSortMode.Automatic;
+			cbDgvReceiptForm.Width = 50;
+			// 
+			// materialIdDataGridViewTextBoxColumn
+			// 
+			materialIdDataGridViewTextBoxColumn.DataPropertyName = "MaterialId";
+			materialIdDataGridViewTextBoxColumn.FillWeight = 93.27411F;
+			materialIdDataGridViewTextBoxColumn.HeaderText = "ID";
+			materialIdDataGridViewTextBoxColumn.MinimumWidth = 6;
+			materialIdDataGridViewTextBoxColumn.Name = "materialIdDataGridViewTextBoxColumn";
+			// 
+			// materialNameDataGridViewTextBoxColumn
+			// 
+			materialNameDataGridViewTextBoxColumn.DataPropertyName = "MaterialName";
+			materialNameDataGridViewTextBoxColumn.FillWeight = 93.27411F;
+			materialNameDataGridViewTextBoxColumn.HeaderText = "Tên";
+			materialNameDataGridViewTextBoxColumn.MinimumWidth = 6;
+			materialNameDataGridViewTextBoxColumn.Name = "materialNameDataGridViewTextBoxColumn";
+			// 
+			// unitDataGridViewTextBoxColumn
+			// 
+			unitDataGridViewTextBoxColumn.DataPropertyName = "Unit";
+			unitDataGridViewTextBoxColumn.FillWeight = 93.27411F;
+			unitDataGridViewTextBoxColumn.HeaderText = "Giá nhập";
+			unitDataGridViewTextBoxColumn.MinimumWidth = 6;
+			unitDataGridViewTextBoxColumn.Name = "unitDataGridViewTextBoxColumn";
+			// 
+			// categoryNameDataGridViewTextBoxColumn
+			// 
+			categoryNameDataGridViewTextBoxColumn.DataPropertyName = "CategoryName";
+			categoryNameDataGridViewTextBoxColumn.FillWeight = 93.27411F;
+			categoryNameDataGridViewTextBoxColumn.HeaderText = "Danh mục";
+			categoryNameDataGridViewTextBoxColumn.MinimumWidth = 6;
+			categoryNameDataGridViewTextBoxColumn.Name = "categoryNameDataGridViewTextBoxColumn";
+			// 
+			// Quantity
+			// 
+			Quantity.DataPropertyName = "Quantity";
+			Quantity.HeaderText = "Số lượng trong kho";
+			Quantity.MinimumWidth = 6;
+			Quantity.Name = "Quantity";
+			// 
+			// Column1
+			// 
+			Column1.HeaderText = "Số lượng";
+			Column1.MinimumWidth = 6;
+			Column1.Name = "Column1";
 			// 
 			// groupBox1
 			// 
@@ -302,63 +361,6 @@
 			btnBack.TabIndex = 15;
 			btnBack.Text = "Quay lại";
 			btnBack.Click += btnBack_Click;
-			// 
-			// cbDgvReceiptForm
-			// 
-			cbDgvReceiptForm.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-			cbDgvReceiptForm.DataPropertyName = "Select";
-			cbDgvReceiptForm.FillWeight = 126.903557F;
-			cbDgvReceiptForm.HeaderText = "Chọn";
-			cbDgvReceiptForm.MinimumWidth = 6;
-			cbDgvReceiptForm.Name = "cbDgvReceiptForm";
-			cbDgvReceiptForm.Resizable = DataGridViewTriState.True;
-			cbDgvReceiptForm.SortMode = DataGridViewColumnSortMode.Automatic;
-			cbDgvReceiptForm.Width = 50;
-			// 
-			// materialIdDataGridViewTextBoxColumn
-			// 
-			materialIdDataGridViewTextBoxColumn.DataPropertyName = "MaterialId";
-			materialIdDataGridViewTextBoxColumn.FillWeight = 93.27411F;
-			materialIdDataGridViewTextBoxColumn.HeaderText = "ID";
-			materialIdDataGridViewTextBoxColumn.MinimumWidth = 6;
-			materialIdDataGridViewTextBoxColumn.Name = "materialIdDataGridViewTextBoxColumn";
-			// 
-			// materialNameDataGridViewTextBoxColumn
-			// 
-			materialNameDataGridViewTextBoxColumn.DataPropertyName = "MaterialName";
-			materialNameDataGridViewTextBoxColumn.FillWeight = 93.27411F;
-			materialNameDataGridViewTextBoxColumn.HeaderText = "Tên";
-			materialNameDataGridViewTextBoxColumn.MinimumWidth = 6;
-			materialNameDataGridViewTextBoxColumn.Name = "materialNameDataGridViewTextBoxColumn";
-			// 
-			// unitDataGridViewTextBoxColumn
-			// 
-			unitDataGridViewTextBoxColumn.DataPropertyName = "Unit";
-			unitDataGridViewTextBoxColumn.FillWeight = 93.27411F;
-			unitDataGridViewTextBoxColumn.HeaderText = "Giá nhập";
-			unitDataGridViewTextBoxColumn.MinimumWidth = 6;
-			unitDataGridViewTextBoxColumn.Name = "unitDataGridViewTextBoxColumn";
-			// 
-			// categoryNameDataGridViewTextBoxColumn
-			// 
-			categoryNameDataGridViewTextBoxColumn.DataPropertyName = "CategoryName";
-			categoryNameDataGridViewTextBoxColumn.FillWeight = 93.27411F;
-			categoryNameDataGridViewTextBoxColumn.HeaderText = "Danh mục";
-			categoryNameDataGridViewTextBoxColumn.MinimumWidth = 6;
-			categoryNameDataGridViewTextBoxColumn.Name = "categoryNameDataGridViewTextBoxColumn";
-			// 
-			// Quantity
-			// 
-			Quantity.DataPropertyName = "Quantity";
-			Quantity.HeaderText = "Số lượng trong kho";
-			Quantity.MinimumWidth = 6;
-			Quantity.Name = "Quantity";
-			// 
-			// Column1
-			// 
-			Column1.HeaderText = "Số lượng";
-			Column1.MinimumWidth = 6;
-			Column1.Name = "Column1";
 			// 
 			// ReceiptForm
 			// 
