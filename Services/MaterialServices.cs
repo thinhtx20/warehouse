@@ -1,4 +1,6 @@
-﻿using Inventory_manager.dto.Response;
+﻿using Azure.Core;
+using Inventory_manager.dto.Request;
+using Inventory_manager.dto.Response;
 using Inventory_manager.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -11,27 +13,33 @@ namespace Inventory_manager.Services
 {
 	public class MaterialServices
 	{
-		private readonly WarehousesManagerContext _context;
 		public MaterialServices()
 		{
-			_context = new WarehousesManagerContext();
 		}
 		public async Task<List<MaterialResponeMessage>> GetMaterialsAsync(List<int>? Ids)
 		{
+			using var _context = new WarehousesManagerContext();
+
 			var query = await _context.Materials.AsNoTracking().Include(x => x.Category).Where(x => x.IsActive == true)
-				.Where(x => Ids == null || !Ids.Any() || Ids.Contains(x.MaterialId)) 
+				.Where(x => Ids == null || !Ids.Any() || Ids.Contains(x.MaterialId))
 				.Select(x => new MaterialResponeMessage
 				{
 					CategoryName = x.Category.CategoryName,
 					MaterialId = x.MaterialId,
 					MaterialName = x.MaterialName,
-					// Quantity = x.Quantity,
-					Unit = x.Unit
+					Unit = x.Unit,
+
 				}).ToListAsync();
+			foreach (var item in query)
+			{
+				var totalInWarehouse = await _context.Stocks.Where(s => s.MaterialId == item.MaterialId).SumAsync(s => s.Quantity);
+				item.Quantity = (int)totalInWarehouse;
+			}
 			return query;
 		}
 		public async Task<List<int>> GetMaterialInReceipt(int ReceiptId)
 		{
+			using var _context = new WarehousesManagerContext();
 			var lst = new List<int>();
 			if (ReceiptId == null) return null;
 			try
@@ -48,6 +56,7 @@ namespace Inventory_manager.Services
 		}
 		public async Task<List<int>> GetMaterialInIssue(int IssueId)
 		{
+			using var _context = new WarehousesManagerContext();
 			var lst = new List<int>();
 			if (IssueId == null) return null;
 			try
@@ -61,6 +70,150 @@ namespace Inventory_manager.Services
 			{
 				return null;
 			}
+		}
+		public async Task<bool> CreatedMaterialsAsync(CreatedMaterialRequestModel request)
+		{
+			try
+			{
+				using var _context = new WarehousesManagerContext();
+
+				var dataNew = new Material()
+				{
+					CategoryId = request.CategoryId,
+					Description = request.Description,
+					MaterialCode = $"MT{DateTime.Now:yyyyMMddHHmmss}",
+					MaterialName = request.Name,
+					Quantity = request.Quantity,
+					Unit = (decimal)request.Units,
+				};
+				await _context.AddAsync(dataNew);
+				await _context.SaveChangesAsync();
+				return true;
+			}
+			catch (Exception ex)
+			{
+				return false;
+			}
+		}
+		public async Task<List<MaterialCategoryRespone>> MaterialCategoryAsync()
+		{
+			var resp = new List<MaterialCategoryRespone>();
+			using var _context = new WarehousesManagerContext();
+			try
+			{
+				var category = await _context.MaterialCategories.AsNoTracking().Select(x => new MaterialCategoryRespone
+				{
+					Id = x.CategoryId,
+					Name = x.CategoryName,
+
+				}).ToListAsync();
+
+				resp = category.ToList();
+
+				return resp;
+			}
+			catch (Exception ex)
+			{
+				return null;
+			}
+		}
+		public async Task<bool> UpdateMaterialsAsync(UpdateMaterialRequestModel request)
+		{
+			try
+			{
+				using var _context = new WarehousesManagerContext();
+
+				var material = await _context.Materials
+					.FirstOrDefaultAsync(x => x.MaterialId == request.Id);
+
+				if (material == null)
+					return false;
+
+				// Update các field
+				material.CategoryId = request.CategoryId;
+				material.Description = request.Description;
+				material.MaterialName = request.Name;
+				material.Quantity = request.Quantity;
+				material.Unit = (decimal)request.Units;
+
+				await _context.SaveChangesAsync();
+				return true;
+			}
+			catch (Exception)
+			{
+				return false;
+			}
+		}
+		public async Task<bool> DeleteMaterialsAsync(List<int>? ids)
+		{
+			using var _context = new WarehousesManagerContext();
+
+			try
+			{
+				foreach (var item in ids)
+				{
+
+					var material = await _context.Materials
+						.FirstOrDefaultAsync(x => x.MaterialId == item);
+
+					if (material == null)
+						return false;
+					var deleInventoryIssueDetail = await _context.InventoryIssueDetails.FirstOrDefaultAsync(x => x.MaterialId == item);
+					var InventoryReceiptDetail = await _context.InventoryReceiptDetails.FirstOrDefaultAsync(x => x.MaterialId == item);
+					var StockLog = await _context.StockLogs.FirstOrDefaultAsync(x => x.MaterialId == item);
+					var Stock = await _context.Stocks.FirstOrDefaultAsync(x => x.MaterialId == item);
+
+					if (Stock != null)
+						_context.Stocks.Remove(Stock);
+					if (StockLog != null)
+						_context.StockLogs.Remove(StockLog);
+					if (InventoryReceiptDetail != null)
+						_context.InventoryReceiptDetails.Remove(InventoryReceiptDetail);
+					if (deleInventoryIssueDetail != null)
+						_context.InventoryIssueDetails.Remove(deleInventoryIssueDetail);
+					_context.Materials.Remove(material);
+				}
+				await _context.SaveChangesAsync();
+
+				return true;
+			}
+			catch (Exception)
+			{
+				return false;
+			}
+		}
+		public async Task<MaterialByIdResponeMessage> MaterialById(int materialId)
+		{
+			try
+			{
+				using var _context = new WarehousesManagerContext();
+				var material = await _context.Materials.AsNoTracking().Include(x => x.Category)
+						.FirstOrDefaultAsync(x => x.MaterialId == materialId);
+				var resp = new MaterialByIdResponeMessage
+				{
+					CategoryName = material.Category.CategoryName ?? null,
+					Description = material.Description,
+					MaterialId = materialId,
+					MaterialName = material.MaterialName,
+					Quantity = material.Quantity,
+					CategoryId = materialId,
+					Unit = material.Unit
+				};
+				return resp;
+			}
+			catch { return null; }
+		}
+		public async Task<MaterialCategoryRespone> CategoryByIdRespone(int id)
+		{
+			using var _context = new WarehousesManagerContext();
+			var material = await _context.MaterialCategories.AsNoTracking()
+					.FirstOrDefaultAsync(x => x.CategoryId == id);
+			var resp = new MaterialCategoryRespone
+			{
+				Id = id,
+				Name = material.CategoryName ?? null,
+			};
+			return resp;
 		}
 	}
 }

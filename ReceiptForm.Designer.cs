@@ -51,15 +51,18 @@
 			btnDelete = new Button();
 			btnRefresh = new Button();
 			dgvReceipts = new DataGridView();
+			groupBox1 = new GroupBox();
+			dgvListReceipt = new DataGridView();
+			listReceiptResponeMessageBindingSource = new BindingSource(components);
+			groupBox2 = new GroupBox();
+			btnBack = new Button();
 			cbDgvReceiptForm = new DataGridViewCheckBoxColumn();
 			materialIdDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			materialNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			unitDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			categoryNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			Quantity = new DataGridViewTextBoxColumn();
-			Column1 = new DataGridViewTextBoxColumn();
-			groupBox1 = new GroupBox();
-			dgvListReceipt = new DataGridView();
+			QuantityReceipt = new DataGridViewTextBoxColumn();
 			cbReceipt = new DataGridViewCheckBoxColumn();
 			receiptIDDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			warehouseNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
@@ -68,9 +71,6 @@
 			dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
 			CreatedBy = new DataGridViewTextBoxColumn();
 			CreatedAt = new DataGridViewTextBoxColumn();
-			listReceiptResponeMessageBindingSource = new BindingSource(components);
-			groupBox2 = new GroupBox();
-			btnBack = new Button();
 			((System.ComponentModel.ISupportInitialize)materialResponeMessageBindingSource).BeginInit();
 			((System.ComponentModel.ISupportInitialize)dgvReceipts).BeginInit();
 			groupBox1.SuspendLayout();
@@ -185,7 +185,7 @@
 			dgvReceipts.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 			dgvReceipts.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
 			dgvReceipts.ColumnHeadersHeight = 29;
-			dgvReceipts.Columns.AddRange(new DataGridViewColumn[] { cbDgvReceiptForm, materialIdDataGridViewTextBoxColumn, materialNameDataGridViewTextBoxColumn, unitDataGridViewTextBoxColumn, categoryNameDataGridViewTextBoxColumn, Quantity, Column1 });
+			dgvReceipts.Columns.AddRange(new DataGridViewColumn[] { cbDgvReceiptForm, materialIdDataGridViewTextBoxColumn, materialNameDataGridViewTextBoxColumn, unitDataGridViewTextBoxColumn, categoryNameDataGridViewTextBoxColumn, Quantity, QuantityReceipt });
 			dgvReceipts.DataSource = materialResponeMessageBindingSource;
 			dgvReceipts.Dock = DockStyle.Fill;
 			dgvReceipts.Location = new Point(3, 23);
@@ -195,6 +195,55 @@
 			dgvReceipts.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
 			dgvReceipts.Size = new Size(1123, 454);
 			dgvReceipts.TabIndex = 12;
+			// 
+			// groupBox1
+			// 
+			groupBox1.Controls.Add(dgvListReceipt);
+			groupBox1.Location = new Point(460, 76);
+			groupBox1.Name = "groupBox1";
+			groupBox1.Size = new Size(676, 317);
+			groupBox1.TabIndex = 13;
+			groupBox1.TabStop = false;
+			groupBox1.Text = "Danh sách phiếu nhập hàng";
+			// 
+			// dgvListReceipt
+			// 
+			dgvListReceipt.AutoGenerateColumns = false;
+			dgvListReceipt.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+			dgvListReceipt.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+			dgvListReceipt.Columns.AddRange(new DataGridViewColumn[] { cbReceipt, receiptIDDataGridViewTextBoxColumn, warehouseNameDataGridViewTextBoxColumn, warehouseDescriptionDataGridViewTextBoxColumn, totalMaterialDataGridViewTextBoxColumn, dataGridViewTextBoxColumn1, CreatedBy, CreatedAt });
+			dgvListReceipt.DataSource = listReceiptResponeMessageBindingSource;
+			dgvListReceipt.Dock = DockStyle.Fill;
+			dgvListReceipt.Location = new Point(3, 23);
+			dgvListReceipt.Name = "dgvListReceipt";
+			dgvListReceipt.RowHeadersWidth = 51;
+			dgvListReceipt.Size = new Size(670, 291);
+			dgvListReceipt.TabIndex = 0;
+			dgvListReceipt.CellClick += dgvListReceipt_CellClick;
+			// 
+			// listReceiptResponeMessageBindingSource
+			// 
+			listReceiptResponeMessageBindingSource.DataSource = typeof(dto.Response.ListReceiptResponeMessage);
+			// 
+			// groupBox2
+			// 
+			groupBox2.Controls.Add(dgvReceipts);
+			groupBox2.Location = new Point(7, 394);
+			groupBox2.Name = "groupBox2";
+			groupBox2.Size = new Size(1129, 480);
+			groupBox2.TabIndex = 14;
+			groupBox2.TabStop = false;
+			groupBox2.Text = "Danh sách vật liệu";
+			// 
+			// btnBack
+			// 
+			btnBack.Location = new Point(1042, 29);
+			btnBack.Margin = new Padding(3, 4, 3, 4);
+			btnBack.Name = "btnBack";
+			btnBack.Size = new Size(91, 40);
+			btnBack.TabIndex = 15;
+			btnBack.Text = "Quay lại";
+			btnBack.Click += btnBack_Click;
 			// 
 			// cbDgvReceiptForm
 			// 
@@ -247,36 +296,11 @@
 			Quantity.MinimumWidth = 6;
 			Quantity.Name = "Quantity";
 			// 
-			// Column1
+			// QuantityReceipt
 			// 
-			Column1.HeaderText = "Số lượng";
-			Column1.MinimumWidth = 6;
-			Column1.Name = "Column1";
-			// 
-			// groupBox1
-			// 
-			groupBox1.Controls.Add(dgvListReceipt);
-			groupBox1.Location = new Point(460, 76);
-			groupBox1.Name = "groupBox1";
-			groupBox1.Size = new Size(676, 317);
-			groupBox1.TabIndex = 13;
-			groupBox1.TabStop = false;
-			groupBox1.Text = "Danh sách phiếu nhập kho";
-			// 
-			// dgvListReceipt
-			// 
-			dgvListReceipt.AutoGenerateColumns = false;
-			dgvListReceipt.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-			dgvListReceipt.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-			dgvListReceipt.Columns.AddRange(new DataGridViewColumn[] { cbReceipt, receiptIDDataGridViewTextBoxColumn, warehouseNameDataGridViewTextBoxColumn, warehouseDescriptionDataGridViewTextBoxColumn, totalMaterialDataGridViewTextBoxColumn, dataGridViewTextBoxColumn1, CreatedBy, CreatedAt });
-			dgvListReceipt.DataSource = listReceiptResponeMessageBindingSource;
-			dgvListReceipt.Dock = DockStyle.Fill;
-			dgvListReceipt.Location = new Point(3, 23);
-			dgvListReceipt.Name = "dgvListReceipt";
-			dgvListReceipt.RowHeadersWidth = 51;
-			dgvListReceipt.Size = new Size(670, 291);
-			dgvListReceipt.TabIndex = 0;
-			dgvListReceipt.CellClick += dgvListReceipt_CellClick;
+			QuantityReceipt.HeaderText = "Số lượng";
+			QuantityReceipt.MinimumWidth = 6;
+			QuantityReceipt.Name = "QuantityReceipt";
 			// 
 			// cbReceipt
 			// 
@@ -338,30 +362,6 @@
 			CreatedAt.MinimumWidth = 6;
 			CreatedAt.Name = "CreatedAt";
 			// 
-			// listReceiptResponeMessageBindingSource
-			// 
-			listReceiptResponeMessageBindingSource.DataSource = typeof(dto.Response.ListReceiptResponeMessage);
-			// 
-			// groupBox2
-			// 
-			groupBox2.Controls.Add(dgvReceipts);
-			groupBox2.Location = new Point(7, 394);
-			groupBox2.Name = "groupBox2";
-			groupBox2.Size = new Size(1129, 480);
-			groupBox2.TabIndex = 14;
-			groupBox2.TabStop = false;
-			groupBox2.Text = "Danh sách vật liệu";
-			// 
-			// btnBack
-			// 
-			btnBack.Location = new Point(1042, 29);
-			btnBack.Margin = new Padding(3, 4, 3, 4);
-			btnBack.Name = "btnBack";
-			btnBack.Size = new Size(91, 40);
-			btnBack.TabIndex = 15;
-			btnBack.Text = "Quay lại";
-			btnBack.Click += btnBack_Click;
-			// 
 			// ReceiptForm
 			// 
 			AutoScaleDimensions = new SizeF(8F, 20F);
@@ -382,7 +382,7 @@
 			Controls.Add(btnRefresh);
 			Margin = new Padding(3, 4, 3, 4);
 			Name = "ReceiptForm";
-			Text = "Quản lý phiếu nhập kho";
+			Text = "Quản lý phiếu nhập hàng";
 			((System.ComponentModel.ISupportInitialize)materialResponeMessageBindingSource).EndInit();
 			((System.ComponentModel.ISupportInitialize)dgvReceipts).EndInit();
 			groupBox1.ResumeLayout(false);
@@ -416,5 +416,6 @@
 		private DataGridViewTextBoxColumn categoryNameDataGridViewTextBoxColumn;
 		private DataGridViewTextBoxColumn Quantity;
 		private DataGridViewTextBoxColumn Column1;
+		private DataGridViewTextBoxColumn QuantityReceipt;
 	}
 }

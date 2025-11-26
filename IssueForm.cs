@@ -16,7 +16,7 @@ namespace Inventory_manager
 	public partial class IssueForm : Form
 	{
 		private User _currentUser;
-		private readonly InventoryService _issueService = new InventoryService();
+		private readonly InventoryService _issueService;
 		private List<WarehouseMaterialRespone> _warehouses;
 		private readonly MaterialServices _materialServices;
 		private List<MaterialResponeMessage> _materialData = new List<MaterialResponeMessage>();
@@ -27,6 +27,7 @@ namespace Inventory_manager
 		public IssueForm(User user)
 		{
 			_currentUser = user;
+			_issueService = new InventoryService();
 			_materialServices = new MaterialServices();
 			InitializeComponent();
 			this.Load += IssueForm_Load;
@@ -34,10 +35,17 @@ namespace Inventory_manager
 
 		private async void IssueForm_Load(object sender, EventArgs e)
 		{
-			txtDescription.Clear();
-			await LoadMockData();
-			LoadDataCombobox();
-			LoadDataGridView();
+			try
+			{
+				txtDescription.Clear();
+				await LoadMockData();
+				LoadDataCombobox();
+				LoadDataGridView();
+			}
+			catch (Exception ex)
+			{
+				throw new Exception(ex.Message);
+			}
 		}
 
 		private async Task LoadMockData()
@@ -113,7 +121,7 @@ namespace Inventory_manager
 			}
 		}
 
-		private void btnAdd_Click(object sender, EventArgs e)
+		private void btnAdd_Click_1(object sender, EventArgs e)
 		{
 			try
 			{
@@ -148,7 +156,7 @@ namespace Inventory_manager
 				}
 
 				_issueService.CreateIssue(body);
-				MessageBox.Show("Thêm phiếu xuất kho thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
+				MessageBox.Show("Thêm phiếu xuất hàng thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 				IssueForm_Load(this, EventArgs.Empty);
 			}
@@ -197,7 +205,7 @@ namespace Inventory_manager
 				}
 
 				_issueService.UpdateIssue(body);
-				MessageBox.Show("Cập nhật phiếu xuất kho thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
+				MessageBox.Show("Cập nhật phiếu xuất hàng thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 				IssueForm_Load(this, EventArgs.Empty);
 			}
@@ -207,7 +215,7 @@ namespace Inventory_manager
 			}
 		}
 
-		private void btnDelete_Click(object sender, EventArgs e)
+		private void btnDelete_Click_1(object sender, EventArgs e)
 		{
 			try
 			{
@@ -218,7 +226,7 @@ namespace Inventory_manager
 				}
 
 				_issueService.DeleteIssue(lstIds);
-				MessageBox.Show("Xóa phiếu xuất kho thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
+				MessageBox.Show("Xóa phiếu xuất hàng thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 				IssueForm_Load(this, EventArgs.Empty);
 			}
@@ -228,17 +236,17 @@ namespace Inventory_manager
 			}
 		}
 
-		private void btnRefresh_Click(object sender, EventArgs e)
-		{
-			IssueForm_Load(this, EventArgs.Empty);
-		}
-
-		private void btnBack_Click(object sender, EventArgs e)
+		private void btnBack_Click_1(object sender, EventArgs e)
 		{
 			var mainForm = new MainForm(_currentUser);
 			mainForm.Show();
 			lstIds.Clear();
 			this.Close();
+		}
+
+		private void btnRefresh_Click_1(object sender, EventArgs e)
+		{
+			IssueForm_Load(this, EventArgs.Empty);
 		}
 	}
 }

@@ -25,7 +25,6 @@ namespace Inventory_manager
 		private List<MaterialResponeMessage> _materialData = new List<MaterialResponeMessage>();
 		private List<ListReceiptResponeMessage> _receiptData = new List<ListReceiptResponeMessage>();
 		private List<int> lstIds = new List<int>();
-		private List<int> lstIdMaterial = new List<int>();
 
 		public ReceiptForm(User user)
 		{
@@ -98,7 +97,7 @@ namespace Inventory_manager
 						body.Items.Add(new ReceiptItem()
 						{
 							MaterialId = Convert.ToInt32(row.Cells["materialIdDataGridViewTextBoxColumn"].Value),
-							Quantity = Convert.ToInt32(row.Cells["Quantity"].Value),
+							Quantity = Convert.ToInt32(row.Cells["QuantityReceipt"].Value),
 							UnitPrice = Convert.ToDecimal(row.Cells["unitDataGridViewTextBoxColumn"].Value)
 						});
 					}

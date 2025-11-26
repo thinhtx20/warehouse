@@ -13,7 +13,6 @@ namespace Inventory_manager
 		private Button btnReceipt;
 		private Button btnIssue;
 		private Button btnMaterials;
-		private Button btnWarehouses;
 		private readonly MaterialServices _materialServices;
 		private List<MaterialResponeMessage> _materialData = new List<MaterialResponeMessage>();
 		public MainForm(User currentUser)
@@ -32,7 +31,6 @@ namespace Inventory_manager
 			btnReceipt = new Button();
 			btnIssue = new Button();
 			btnMaterials = new Button();
-			btnWarehouses = new Button();
 			grbMenu = new GroupBox();
 			grbMain = new GroupBox();
 			dgvMaterials = new DataGridView();
@@ -44,6 +42,7 @@ namespace Inventory_manager
 			categoryNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			materialResponeMessageBindingSource = new BindingSource(components);
 			receiptRequestModelsBindingSource = new BindingSource(components);
+			groupBox1 = new GroupBox();
 			grbMenu.SuspendLayout();
 			grbMain.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)dgvMaterials).BeginInit();
@@ -57,14 +56,14 @@ namespace Inventory_manager
 			lblWelcome.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
 			lblWelcome.Location = new Point(20, 20);
 			lblWelcome.Name = "lblWelcome";
-			lblWelcome.Size = new Size(0, 28);
+			lblWelcome.Size = new Size(0, 21);
 			lblWelcome.TabIndex = 0;
 			// 
 			// btnLogout
 			// 
 			btnLogout.BackColor = Color.LightCoral;
 			btnLogout.ForeColor = Color.White;
-			btnLogout.Location = new Point(711, 12);
+			btnLogout.Location = new Point(679, 9);
 			btnLogout.Name = "btnLogout";
 			btnLogout.Size = new Size(100, 32);
 			btnLogout.TabIndex = 1;
@@ -74,45 +73,37 @@ namespace Inventory_manager
 			// 
 			// btnReceipt
 			// 
-			btnReceipt.Location = new Point(40, 22);
+			btnReceipt.Location = new Point(63, 22);
 			btnReceipt.Name = "btnReceipt";
 			btnReceipt.Size = new Size(150, 50);
 			btnReceipt.TabIndex = 2;
-			btnReceipt.Text = "Nhập kho";
+			btnReceipt.Text = "Nhập hàng";
 			// 
 			// btnIssue
 			// 
-			btnIssue.Location = new Point(227, 22);
+			btnIssue.Location = new Point(278, 22);
 			btnIssue.Name = "btnIssue";
 			btnIssue.Size = new Size(150, 50);
 			btnIssue.TabIndex = 3;
-			btnIssue.Text = "Xuất kho";
+			btnIssue.Text = "Xuất hàng";
+			btnIssue.Click += btnIssue_Click;
 			// 
 			// btnMaterials
 			// 
-			btnMaterials.Location = new Point(416, 22);
+			btnMaterials.Location = new Point(505, 22);
 			btnMaterials.Name = "btnMaterials";
 			btnMaterials.Size = new Size(150, 50);
 			btnMaterials.TabIndex = 4;
 			btnMaterials.Text = "Vật tư";
 			// 
-			// btnWarehouses
-			// 
-			btnWarehouses.Location = new Point(612, 22);
-			btnWarehouses.Name = "btnWarehouses";
-			btnWarehouses.Size = new Size(150, 50);
-			btnWarehouses.TabIndex = 5;
-			btnWarehouses.Text = "Thống kê kho";
-			// 
 			// grbMenu
 			// 
-			grbMenu.Controls.Add(btnWarehouses);
 			grbMenu.Controls.Add(btnMaterials);
 			grbMenu.Controls.Add(btnIssue);
 			grbMenu.Controls.Add(btnReceipt);
 			grbMenu.Location = new Point(33, 50);
 			grbMenu.Name = "grbMenu";
-			grbMenu.Size = new Size(778, 99);
+			grbMenu.Size = new Size(749, 95);
 			grbMenu.TabIndex = 6;
 			grbMenu.TabStop = false;
 			grbMenu.Text = "Menu";
@@ -122,7 +113,7 @@ namespace Inventory_manager
 			grbMain.Controls.Add(dgvMaterials);
 			grbMain.Location = new Point(20, 270);
 			grbMain.Name = "grbMain";
-			grbMain.Size = new Size(805, 377);
+			grbMain.Size = new Size(762, 377);
 			grbMain.TabIndex = 7;
 			grbMain.TabStop = false;
 			grbMain.Text = "Danh sách vật tư";
@@ -135,10 +126,10 @@ namespace Inventory_manager
 			dgvMaterials.Columns.AddRange(new DataGridViewColumn[] { STT, materialIdDataGridViewTextBoxColumn, materialNameDataGridViewTextBoxColumn, unitDataGridViewTextBoxColumn, quantityDataGridViewTextBoxColumn, categoryNameDataGridViewTextBoxColumn });
 			dgvMaterials.DataSource = materialResponeMessageBindingSource;
 			dgvMaterials.Dock = DockStyle.Fill;
-			dgvMaterials.Location = new Point(3, 23);
+			dgvMaterials.Location = new Point(3, 19);
 			dgvMaterials.Name = "dgvMaterials";
 			dgvMaterials.RowHeadersWidth = 51;
-			dgvMaterials.Size = new Size(799, 351);
+			dgvMaterials.Size = new Size(756, 355);
 			dgvMaterials.TabIndex = 0;
 			// 
 			// STT
@@ -191,10 +182,20 @@ namespace Inventory_manager
 			// 
 			receiptRequestModelsBindingSource.DataSource = typeof(dto.Request.ReceiptRequestModels);
 			// 
+			// groupBox1
+			// 
+			groupBox1.Location = new Point(33, 151);
+			groupBox1.Name = "groupBox1";
+			groupBox1.Size = new Size(749, 95);
+			groupBox1.TabIndex = 7;
+			groupBox1.TabStop = false;
+			groupBox1.Text = "Thống kê kho";
+			// 
 			// MainForm
 			// 
 			BackColor = Color.FromArgb(240, 248, 255);
-			ClientSize = new Size(863, 683);
+			ClientSize = new Size(791, 650);
+			Controls.Add(groupBox1);
 			Controls.Add(grbMain);
 			Controls.Add(grbMenu);
 			Controls.Add(lblWelcome);
@@ -218,31 +219,31 @@ namespace Inventory_manager
 
 			btnReceipt.Click += (s, e2) =>
 			{
+				this.Hide(); // ẩn MainForm
 				var form = new ReceiptForm(_currentUser);
 				form.ShowDialog();
-				this.Hide(); // ẩn MainForm
+				this.Show(); // hiện lại khi ReceiptForm đóng
 			};
 
 			btnIssue.Click += (s, e2) =>
 			{
+				this.Hide(); // ẩn MainForm
 				var form = new IssueForm(_currentUser);
 				form.ShowDialog();
-				this.Hide(); // ẩn MainForm
+
+				this.Show(); // hiện lại khi IssueForm đóng
 			};
 
 			btnMaterials.Click += (s, e2) =>
 			{
-				var form = new WarehouseForm();
+				this.Hide(); // ẩn trước
+
+				var form = new MaterialForm(_currentUser);
 				form.ShowDialog();
-				this.Hide(); // ẩn MainForm
+
+				this.Show(); // hiện lại khi MaterialForm đóng
 			};
 
-			btnWarehouses.Click += (s, e2) =>
-			{
-				var form = new WarehouseForm();
-				form.ShowDialog();
-				this.Hide(); // ẩn MainForm 
-			};
 			await LoadMockData();
 			LoadDataGridView();
 
@@ -262,6 +263,11 @@ namespace Inventory_manager
 			var form = new LoginForm();
 			form.ShowDialog();
 			this.Hide(); // ẩn MainForm
+		}
+
+		private void btnIssue_Click(object sender, EventArgs e)
+		{
+
 		}
 	}
 }

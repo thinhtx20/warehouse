@@ -49,5 +49,19 @@ namespace Inventory_manager.dto.Response
 
 		public decimal TotalMaterial { get; set; }
 	}
-
+	public class MaterialCategoryRespone
+	{
+		public int Id { get; set; }
+		public string Name { get; set; }
+	}
+	public class MaterialByIdResponeMessage
+	{
+		public int MaterialId { get; set; }
+		public string? MaterialName { get; set; }
+		public decimal Unit { get; set; }
+		public int Quantity { get; set; }
+		public int CategoryId { get; set; }
+		public string? CategoryName { get; set; }
+		public string? Description { get; set; }
+	}
 }

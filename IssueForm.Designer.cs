@@ -47,7 +47,6 @@
 			unitDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			materialNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			materialIdDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-			cbDgvIssueForm = new DataGridViewCheckBoxColumn();
 			dgvIssues = new DataGridView();
 			materialResponeMessageBindingSource = new BindingSource(components);
 			lblCreatedAt = new Label();
@@ -77,6 +76,7 @@
 			btnBack.Size = new Size(91, 40);
 			btnBack.TabIndex = 28;
 			btnBack.Text = "Quay lại";
+			btnBack.Click += btnBack_Click_1;
 			// 
 			// listIssueResponeMessageBindingSource
 			// 
@@ -131,7 +131,7 @@
 			IssueIDDataGridViewTextBoxColumn.DataPropertyName = "IssueID";
 			IssueIDDataGridViewTextBoxColumn.HeaderText = "ID";
 			IssueIDDataGridViewTextBoxColumn.MinimumWidth = 6;
-			IssueIDDataGridViewTextBoxColumn.Name = "issueIDDataGridViewTextBoxColumn";
+			IssueIDDataGridViewTextBoxColumn.Name = "IssueIDDataGridViewTextBoxColumn";
 			IssueIDDataGridViewTextBoxColumn.Width = 53;
 			// 
 			// cbIssue
@@ -155,6 +155,7 @@
 			dgvListIssue.RowHeadersWidth = 51;
 			dgvListIssue.Size = new Size(670, 291);
 			dgvListIssue.TabIndex = 0;
+			dgvListIssue.CellClick += dgvListIssue_CellClick;
 			// 
 			// groupBox1
 			// 
@@ -164,7 +165,7 @@
 			groupBox1.Size = new Size(676, 317);
 			groupBox1.TabIndex = 26;
 			groupBox1.TabStop = false;
-			groupBox1.Text = "Danh sách phiếu xuất kho";
+			groupBox1.Text = "Danh sách phiếu xuất hàng";
 			// 
 			// Column1
 			// 
@@ -211,25 +212,13 @@
 			materialIdDataGridViewTextBoxColumn.MinimumWidth = 6;
 			materialIdDataGridViewTextBoxColumn.Name = "materialIdDataGridViewTextBoxColumn";
 			// 
-			// cbDgvIssueForm
-			// 
-			cbDgvIssueForm.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-			cbDgvIssueForm.DataPropertyName = "Select";
-			cbDgvIssueForm.FillWeight = 126.903557F;
-			cbDgvIssueForm.HeaderText = "Chọn";
-			cbDgvIssueForm.MinimumWidth = 6;
-			cbDgvIssueForm.Name = "cbDgvIssueForm";
-			cbDgvIssueForm.Resizable = DataGridViewTriState.True;
-			cbDgvIssueForm.SortMode = DataGridViewColumnSortMode.Automatic;
-			cbDgvIssueForm.Width = 50;
-			// 
 			// dgvIssues
 			// 
 			dgvIssues.AutoGenerateColumns = false;
 			dgvIssues.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 			dgvIssues.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
 			dgvIssues.ColumnHeadersHeight = 29;
-			dgvIssues.Columns.AddRange(new DataGridViewColumn[] { cbDgvIssueForm, materialIdDataGridViewTextBoxColumn, materialNameDataGridViewTextBoxColumn, unitDataGridViewTextBoxColumn, categoryNameDataGridViewTextBoxColumn, Quantity, Column1 });
+			dgvIssues.Columns.AddRange(new DataGridViewColumn[] { materialIdDataGridViewTextBoxColumn, materialNameDataGridViewTextBoxColumn, unitDataGridViewTextBoxColumn, categoryNameDataGridViewTextBoxColumn, Quantity, Column1 });
 			dgvIssues.DataSource = materialResponeMessageBindingSource;
 			dgvIssues.Dock = DockStyle.Fill;
 			dgvIssues.Location = new Point(3, 23);
@@ -289,6 +278,7 @@
 			btnAdd.Size = new Size(91, 40);
 			btnAdd.TabIndex = 22;
 			btnAdd.Text = "Thêm";
+			btnAdd.Click += btnAdd_Click_1;
 			// 
 			// btnUpdate
 			// 
@@ -298,6 +288,7 @@
 			btnUpdate.Size = new Size(91, 40);
 			btnUpdate.TabIndex = 23;
 			btnUpdate.Text = "Sửa";
+			btnUpdate.Click += btnUpdate_Click;
 			// 
 			// btnDelete
 			// 
@@ -307,6 +298,7 @@
 			btnDelete.Size = new Size(91, 40);
 			btnDelete.TabIndex = 24;
 			btnDelete.Text = "Xóa";
+			btnDelete.Click += btnDelete_Click_1;
 			// 
 			// btnRefresh
 			// 
@@ -316,6 +308,7 @@
 			btnRefresh.Size = new Size(114, 40);
 			btnRefresh.TabIndex = 25;
 			btnRefresh.Text = "Làm mới";
+			btnRefresh.Click += btnRefresh_Click_1;
 			// 
 			// groupBox2
 			// 

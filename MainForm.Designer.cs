@@ -31,5 +31,6 @@ namespace Inventory_manager
 		private DataGridViewTextBoxColumn unitDataGridViewTextBoxColumn;
 		private DataGridViewTextBoxColumn quantityDataGridViewTextBoxColumn;
 		private DataGridViewTextBoxColumn categoryNameDataGridViewTextBoxColumn;
+		private GroupBox groupBox1;
 	}
 }
