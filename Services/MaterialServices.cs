@@ -208,6 +208,7 @@ namespace Inventory_manager.Services
 			using var _context = new WarehousesManagerContext();
 			var material = await _context.MaterialCategories.AsNoTracking()
 					.FirstOrDefaultAsync(x => x.CategoryId == id);
+			if (material == null) return null;
 			var resp = new MaterialCategoryRespone
 			{
 				Id = id,

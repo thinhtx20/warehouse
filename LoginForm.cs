@@ -122,6 +122,8 @@ namespace Inventory_manager
 		{
 			string user = txtUsername.Text.Trim();
 			string pass = txtPassword.Text.Trim();
+			//string user = "admin";
+			//string pass = "123456";
 
 			if (user == "" || pass == "")
 			{

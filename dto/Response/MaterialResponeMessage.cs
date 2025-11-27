@@ -51,8 +51,8 @@ namespace Inventory_manager.dto.Response
 	}
 	public class MaterialCategoryRespone
 	{
-		public int Id { get; set; }
-		public string Name { get; set; }
+		public int? Id { get; set; }
+		public string? Name { get; set; }
 	}
 	public class MaterialByIdResponeMessage
 	{

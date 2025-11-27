@@ -90,6 +90,7 @@ namespace Inventory_manager
 
 		private async void dgvListIssue_CellClick(object sender, DataGridViewCellEventArgs e)
 		{
+			// Chống click header
 			if (e.RowIndex < 0)
 			{
 				LoadDataGridView();
@@ -97,28 +98,51 @@ namespace Inventory_manager
 				return;
 			}
 
-			int selectedId = Convert.ToInt32(dgvListIssue.Rows[e.RowIndex].Cells["dataGridViewTextBoxColumn1"].Value);
+			// Lấy selectedId từ DataGridView
+			var valueObj = dgvListIssue.Rows[e.RowIndex].Cells["dataGridViewTextBoxColumn1"].Value;
+			if (valueObj == null) return;
+
+			if (!int.TryParse(valueObj.ToString(), out int selectedId)) return;
+
+			// Reset danh sách kho
 			_warehouses.Clear();
 			_warehouses = await _issueService.LoadMaterials(selectedId);
 
+			// Gán cho combobox Warehouse
 			cbWarehouse.DataSource = _warehouses;
 			cbWarehouse.DisplayMember = "WarehouseName";
 			cbWarehouse.ValueMember = "WarehouseId";
-			cbWarehouse.SelectedIndex = 0;
+			cbWarehouse.SelectedIndex = 0; // chọn mặc định
 
+			// Clear lstIds và thêm selectedId
 			lstIds.Clear();
 			lstIds.Add(selectedId);
 
+			// Lấy danh sách material theo issue
 			var lstIdMaterial = await _materialServices.GetMaterialInIssue(selectedId);
-			_materialData = await _materialServices.GetMaterialsAsync(lstIdMaterial);
-
+			_materialData.Clear();
 			dgvIssues.DataSource = null;
-			dgvIssues.DataSource = _materialData;
-
-			foreach (DataGridViewRow row in dgvIssues.Rows)
+			if (lstIdMaterial != null && lstIdMaterial.Any())
 			{
-				row.Cells["cbDgvIssueForm"].Value = true;
+
+				_materialData = await _materialServices.GetMaterialsAsync(lstIdMaterial);
+
+				// Gán dữ liệu lên DataGridView
+				dgvIssues.DataSource = null;
+				dgvIssues.DataSource = _materialData;
+
+				// Tick checkbox toàn bộ row (mặc định)
+				foreach (DataGridViewRow row in dgvIssues.Rows)
+				{
+					var cell = row.Cells["select"] as DataGridViewCheckBoxCell;
+					if (cell != null)
+					{
+						cell.Value = true; // tick checkbox
+					}
+				}
+				dgvIssues.Refresh();
 			}
+
 		}
 
 		private void btnAdd_Click_1(object sender, EventArgs e)
@@ -143,7 +167,7 @@ namespace Inventory_manager
 				{
 					if (row.IsNewRow) continue;
 
-					var selected = row.Cells["cbDgvIssueForm"].Value;
+					var selected = row.Cells["select"].Value;
 					if (selected != null && (bool)selected == true)
 					{
 						body.Items.Add(new IssueItemRequest()
@@ -159,6 +183,7 @@ namespace Inventory_manager
 				MessageBox.Show("Thêm phiếu xuất hàng thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 				IssueForm_Load(this, EventArgs.Empty);
+				return;
 			}
 			catch (Exception ex)
 			{
@@ -208,6 +233,7 @@ namespace Inventory_manager
 				MessageBox.Show("Cập nhật phiếu xuất hàng thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 				IssueForm_Load(this, EventArgs.Empty);
+				return;
 			}
 			catch (Exception ex)
 			{

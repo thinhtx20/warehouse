@@ -17,7 +17,9 @@ namespace Inventory_manager
 	public partial class MaterialForm : Form
 	{
 		private readonly List<MaterialCategoryRespone> _dataCombobox = new List<MaterialCategoryRespone>();
+		private  MaterialCategoryRespone _dataMaterialCombobox = new MaterialCategoryRespone();
 		private List<MaterialResponeMessage> _materialData = new List<MaterialResponeMessage>();
+		private MaterialByIdResponeMessage _materialDataById = new MaterialByIdResponeMessage();
 		private readonly MaterialServices _materialServices;
 		private List<int> lstIds = new List<int>();
 		private User _currentUser;
@@ -120,27 +122,54 @@ namespace Inventory_manager
 			}
 		}
 
-		private void dgvMaterials_CellClick(object sender, DataGridViewCellEventArgs e)
+		private async void dgvMaterials_CellClick(object sender, DataGridViewCellEventArgs e)
 		{
-			var idClick = Convert.ToInt32(dgvMaterials.Rows[e.RowIndex].Cells["materialCick"].Value);
-			lstIds.Add(idClick);
-			var materialId = _materialServices.MaterialById(idClick);
-			if (materialId != null)
+			// Chống click header hoặc row lỗi
+			if (e.RowIndex < 0) return;
+			_materialDataById = null;
+
+			// Lấy ID vật liệu từ cell "materialCick"
+			var cellValue = Convert.ToInt32(dgvMaterials.Rows[e.RowIndex].Cells["materialIdDataGridViewTextBoxColumn"].Value);
+			if (cellValue == null) return;
+			lstIds.Add(cellValue);
+			// Kiểm tra xem cột checkbox là cột "materialCick"
+			if (dgvMaterials.Columns[e.ColumnIndex] is DataGridViewCheckBoxColumn &&
+				dgvMaterials.Columns[e.ColumnIndex].Name == "materialCick")
 			{
-				txtDescription.Text = materialId.Result.Description;
-				txtMaterialName.Text = materialId.Result.MaterialName;
-				nbQuantity.Value = materialId.Result.Quantity;
-				nbUnits.Value = materialId.Result.Unit;
-				var category = _materialServices.CategoryByIdRespone(materialId.Result.CategoryId);
-				if (category != null)
+				var cell = dgvMaterials.Rows[e.RowIndex].Cells[e.ColumnIndex] as DataGridViewCheckBoxCell;
+				if (cell != null)
 				{
-					cbbCategory.DataSource = _dataCombobox;
-					cbbCategory.DisplayMember = category.Result.Name;
-					cbbCategory.ValueMember = category.Result.Id.ToString();
-					cbbCategory.SelectedIndex = 0; // chọn mặc định là item click	
+					// Toggle giá trị
+					bool currentValue = (bool?)(cell.Value) ?? false;
+					cell.Value = !currentValue;
+
+					// Commit để hiển thị ngay
+					dgvMaterials.CommitEdit(DataGridViewDataErrorContexts.Commit);
 				}
 			}
+			// Lấy vật liệu theo ID
+			_materialDataById = await _materialServices.MaterialById(cellValue);
+			if (_materialDataById == null) return;
+
+			txtDescription.Text = _materialDataById.Description;
+			txtMaterialName.Text = _materialDataById.MaterialName;
+			nbQuantity.Value = _materialDataById.Quantity;
+			nbUnits.Value = _materialDataById.Unit;
+
+			// Lấy category
+			_dataMaterialCombobox = null;
+			_dataMaterialCombobox = await _materialServices.CategoryByIdRespone(_materialDataById.CategoryId);
+			if (_dataMaterialCombobox == null) return;
+
+			// Gán lại datasource một lần
+			cbbCategory.DataSource = _dataCombobox;
+			cbbCategory.DisplayMember = "Name"; // TÊN THUỘC TÍNH
+			cbbCategory.ValueMember = "Id";     // TÊN THUỘC TÍNH
+
+			// Chọn đúng category của material
+			cbbCategory.SelectedValue = _dataMaterialCombobox.Id;
 		}
+
 
 		private void btnUpdate_Click(object sender, EventArgs e)
 		{
@@ -199,5 +228,6 @@ namespace Inventory_manager
 			lstIds.Clear();
 			this.Close();
 		}
+
 	}
 }

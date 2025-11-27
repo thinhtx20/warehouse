@@ -29,12 +29,6 @@ namespace Inventory_manager
 			components = new System.ComponentModel.Container();
 			groupBoxMaterials = new GroupBox();
 			dgvMaterials = new DataGridView();
-			materialCick = new DataGridViewCheckBoxColumn();
-			materialIdDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-			materialNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-			unitDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-			quantityDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-			categoryNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			materialResponeMessageBindingSource = new BindingSource(components);
 			lblName = new Label();
 			lblUnit = new Label();
@@ -53,6 +47,12 @@ namespace Inventory_manager
 			label2 = new Label();
 			label1 = new Label();
 			toolTip1 = new ToolTip(components);
+			materialCick = new DataGridViewCheckBoxColumn();
+			materialIdDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+			materialNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+			unitDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+			quantityDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+			categoryNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			groupBoxMaterials.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)dgvMaterials).BeginInit();
 			((System.ComponentModel.ISupportInitialize)materialResponeMessageBindingSource).BeginInit();
@@ -87,49 +87,6 @@ namespace Inventory_manager
 			dgvMaterials.Size = new Size(829, 458);
 			dgvMaterials.TabIndex = 0;
 			dgvMaterials.CellClick += dgvMaterials_CellClick;
-			// 
-			// materialCick
-			// 
-			materialCick.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-			materialCick.HeaderText = "Chọn";
-			materialCick.Name = "materialCick";
-			materialCick.ReadOnly = true;
-			materialCick.Width = 50;
-			// 
-			// materialIdDataGridViewTextBoxColumn
-			// 
-			materialIdDataGridViewTextBoxColumn.DataPropertyName = "MaterialId";
-			materialIdDataGridViewTextBoxColumn.HeaderText = "ID";
-			materialIdDataGridViewTextBoxColumn.Name = "materialIdDataGridViewTextBoxColumn";
-			materialIdDataGridViewTextBoxColumn.ReadOnly = true;
-			// 
-			// materialNameDataGridViewTextBoxColumn
-			// 
-			materialNameDataGridViewTextBoxColumn.DataPropertyName = "MaterialName";
-			materialNameDataGridViewTextBoxColumn.HeaderText = "Tên";
-			materialNameDataGridViewTextBoxColumn.Name = "materialNameDataGridViewTextBoxColumn";
-			materialNameDataGridViewTextBoxColumn.ReadOnly = true;
-			// 
-			// unitDataGridViewTextBoxColumn
-			// 
-			unitDataGridViewTextBoxColumn.DataPropertyName = "Unit";
-			unitDataGridViewTextBoxColumn.HeaderText = "Giá nhập";
-			unitDataGridViewTextBoxColumn.Name = "unitDataGridViewTextBoxColumn";
-			unitDataGridViewTextBoxColumn.ReadOnly = true;
-			// 
-			// quantityDataGridViewTextBoxColumn
-			// 
-			quantityDataGridViewTextBoxColumn.DataPropertyName = "Quantity";
-			quantityDataGridViewTextBoxColumn.HeaderText = "Số lượng trong kho";
-			quantityDataGridViewTextBoxColumn.Name = "quantityDataGridViewTextBoxColumn";
-			quantityDataGridViewTextBoxColumn.ReadOnly = true;
-			// 
-			// categoryNameDataGridViewTextBoxColumn
-			// 
-			categoryNameDataGridViewTextBoxColumn.DataPropertyName = "CategoryName";
-			categoryNameDataGridViewTextBoxColumn.HeaderText = "Danh mục";
-			categoryNameDataGridViewTextBoxColumn.Name = "categoryNameDataGridViewTextBoxColumn";
-			categoryNameDataGridViewTextBoxColumn.ReadOnly = true;
 			// 
 			// materialResponeMessageBindingSource
 			// 
@@ -228,6 +185,7 @@ namespace Inventory_manager
 			// nbUnits
 			// 
 			nbUnits.Location = new Point(92, 101);
+			nbUnits.Maximum = new decimal(new int[] { -469762048, -590869294, 5421010, 0 });
 			nbUnits.Name = "nbUnits";
 			nbUnits.Size = new Size(239, 23);
 			nbUnits.TabIndex = 18;
@@ -235,6 +193,7 @@ namespace Inventory_manager
 			// nbQuantity
 			// 
 			nbQuantity.Location = new Point(92, 63);
+			nbQuantity.Maximum = new decimal(new int[] { 1661992960, 1808227885, 5, 0 });
 			nbQuantity.Name = "nbQuantity";
 			nbQuantity.Size = new Size(239, 23);
 			nbQuantity.TabIndex = 12;
@@ -278,6 +237,49 @@ namespace Inventory_manager
 			label1.Size = new Size(80, 25);
 			label1.TabIndex = 12;
 			label1.Text = "Tên vật tư:";
+			// 
+			// materialCick
+			// 
+			materialCick.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+			materialCick.HeaderText = "Chọn";
+			materialCick.Name = "materialCick";
+			materialCick.ReadOnly = true;
+			materialCick.Width = 50;
+			// 
+			// materialIdDataGridViewTextBoxColumn
+			// 
+			materialIdDataGridViewTextBoxColumn.DataPropertyName = "MaterialId";
+			materialIdDataGridViewTextBoxColumn.HeaderText = "ID";
+			materialIdDataGridViewTextBoxColumn.Name = "materialIdDataGridViewTextBoxColumn";
+			materialIdDataGridViewTextBoxColumn.ReadOnly = true;
+			// 
+			// materialNameDataGridViewTextBoxColumn
+			// 
+			materialNameDataGridViewTextBoxColumn.DataPropertyName = "MaterialName";
+			materialNameDataGridViewTextBoxColumn.HeaderText = "Tên";
+			materialNameDataGridViewTextBoxColumn.Name = "materialNameDataGridViewTextBoxColumn";
+			materialNameDataGridViewTextBoxColumn.ReadOnly = true;
+			// 
+			// unitDataGridViewTextBoxColumn
+			// 
+			unitDataGridViewTextBoxColumn.DataPropertyName = "Unit";
+			unitDataGridViewTextBoxColumn.HeaderText = "Giá nhập";
+			unitDataGridViewTextBoxColumn.Name = "unitDataGridViewTextBoxColumn";
+			unitDataGridViewTextBoxColumn.ReadOnly = true;
+			// 
+			// quantityDataGridViewTextBoxColumn
+			// 
+			quantityDataGridViewTextBoxColumn.DataPropertyName = "Quantity";
+			quantityDataGridViewTextBoxColumn.HeaderText = "Số lượng trong kho";
+			quantityDataGridViewTextBoxColumn.Name = "quantityDataGridViewTextBoxColumn";
+			quantityDataGridViewTextBoxColumn.ReadOnly = true;
+			// 
+			// categoryNameDataGridViewTextBoxColumn
+			// 
+			categoryNameDataGridViewTextBoxColumn.DataPropertyName = "CategoryName";
+			categoryNameDataGridViewTextBoxColumn.HeaderText = "Danh mục";
+			categoryNameDataGridViewTextBoxColumn.Name = "categoryNameDataGridViewTextBoxColumn";
+			categoryNameDataGridViewTextBoxColumn.ReadOnly = true;
 			// 
 			// MaterialForm
 			// 
