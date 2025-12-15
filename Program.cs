@@ -1,53 +1,59 @@
-﻿using Inventory_manager;
-using Inventory_manager.Models;
-
-//using Inventory_manager.Models;
+﻿using Inventory_manager.Models;
 using Inventory_manager.Utili;
-using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 using System.Windows.Forms;
 
-internal static class Program
+namespace Inventory_manager
 {
-	[STAThread]
-	static void Main()
-	{
-		// 1. Enable visual styles
-		Application.EnableVisualStyles();
-		Application.SetCompatibleTextRenderingDefault(false);
-		// Scaffold-DbContext "Server=vantrong\SQLEXPRESS;Database=warehouses_manager;Trusted_Connection=True;TrustServerCertificate=True" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models -Force
+    internal static class Program
+    {
+        [STAThread]
+        static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
 
-		//// 2. Seed tài khoản admin nếu chưa có
-		using (var db = new WarehousesManagerContext())
-		{
-			if (!db.Users.Any())
-			{
-				db.Users.Add(new User
-				{
-					Username = "admin",
-					PasswodHash = Utils.HashPassword("123456"),
-					FullName = "admin",
-					Role = "admin",
-					IsActive = true
-				});
-			}
-			if (!db.MaterialCategories.Any())
-			{
-				db.MaterialCategories.AddAsync(new MaterialCategory 
-				{
-					CategoryName = "Danh mục 1",
-					
-				});
-				db.MaterialCategories.AddAsync(new MaterialCategory
-				{
-					CategoryName = "Danh mục 2",
+            // Seed dữ liệu ban đầu
+            SeedData();
 
-				});
-			}
-			db.SaveChanges();
-		}
+            // Chạy form login
+            Application.Run(new LoginForm());
+        }
 
-		//// 3. Chạy LoginForm
-		Application.Run(new LoginForm());
-	}
+        private static void SeedData()
+        {
+            using var db = new WarehousesManagerContext();
+
+            // 1. Seed admin
+            if (!db.Users.Any())
+            {
+                db.Users.Add(new User
+                {
+                    Username = "admin",
+                    PasswodHash = Utils.HashPassword("123456"),
+                    FullName = "admin",
+                    Role = "admin",
+                    IsActive = true
+                });
+            }
+
+            // 2. Seed danh mục vật tư
+            if (!db.MaterialCategories.Any())
+            {
+                db.MaterialCategories.AddRange(
+                    new MaterialCategory
+                    {
+                        CategoryName = "Danh mục 1"
+                    },
+                    new MaterialCategory
+                    {
+                        CategoryName = "Danh mục 2"
+                    }
+                );
+            }
+
+            db.SaveChanges();
+        }
+    }
 }
