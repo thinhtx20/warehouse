@@ -1,5 +1,6 @@
 ﻿{
   "ConnectionStrings": {
-    "DefaultConnection": "Server=vantrong\\SQLEXPRESS;Database=InventoryDB;Trusted_Connection=True;TrustServerCertificate=True"
+    "DefaultConnection": "Data Source=LAPTOP-BSMGBMER;Initial Catalog=warehouses_manager;User ID=sa;Password=123456;Trust Server Certificate=True"
+
   }
 }
