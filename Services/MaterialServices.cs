@@ -196,7 +196,7 @@ namespace Inventory_manager.Services
 					MaterialId = materialId,
 					MaterialName = material.MaterialName,
 					Quantity = material.Quantity,
-					CategoryId = materialId,
+					CategoryId = material.CategoryId,
 					Unit = material.Unit
 				};
 				return resp;

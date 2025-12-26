@@ -156,18 +156,17 @@ namespace Inventory_manager
 			nbQuantity.Value = _materialDataById.Quantity;
 			nbUnits.Value = _materialDataById.Unit;
 
-			// Lấy category
-			_dataMaterialCombobox = null;
-			_dataMaterialCombobox = await _materialServices.CategoryByIdRespone(_materialDataById.CategoryId);
-			if (_dataMaterialCombobox == null) return;
-
-			// Gán lại datasource một lần
+			// Gán lại datasource một lần (đảm bảo combobox đã có dữ liệu)
+			cbbCategory.DataSource = null;
 			cbbCategory.DataSource = _dataCombobox;
-			cbbCategory.DisplayMember = "Name"; // TÊN THUỘC TÍNH
-			cbbCategory.ValueMember = "Id";     // TÊN THUỘC TÍNH
+			cbbCategory.DisplayMember = "Name";
+			cbbCategory.ValueMember = "Id";
 
-			// Chọn đúng category của material
-			cbbCategory.SelectedValue = _dataMaterialCombobox.Id;
+			// Chọn đúng category của material bằng CategoryId từ _materialDataById
+			if (_materialDataById.CategoryId > 0)
+			{
+				cbbCategory.SelectedValue = _materialDataById.CategoryId;
+			}
 		}
 
 
