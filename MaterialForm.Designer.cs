@@ -14,6 +14,9 @@ namespace Inventory_manager
 		private System.Windows.Forms.Button btnRefresh;
 		private System.Windows.Forms.Label lblName;
 		private System.Windows.Forms.Label lblUnit;
+		private System.Windows.Forms.TextBox txtSearch;
+		private System.Windows.Forms.Label lblSearch;
+		private System.Windows.Forms.GroupBox groupBoxSearch;
 
 		protected override void Dispose(bool disposing)
 		{
@@ -53,20 +56,52 @@ namespace Inventory_manager
 			unitDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			quantityDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
 			categoryNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+			groupBoxSearch = new GroupBox();
+			txtSearch = new TextBox();
+			lblSearch = new Label();
 			groupBoxMaterials.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)dgvMaterials).BeginInit();
 			((System.ComponentModel.ISupportInitialize)materialResponeMessageBindingSource).BeginInit();
 			groupBox1.SuspendLayout();
+			groupBoxSearch.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)nbUnits).BeginInit();
 			((System.ComponentModel.ISupportInitialize)nbQuantity).BeginInit();
 			SuspendLayout();
 			// 
+			// groupBoxSearch
+			// 
+			groupBoxSearch.Controls.Add(txtSearch);
+			groupBoxSearch.Controls.Add(lblSearch);
+			groupBoxSearch.Location = new Point(12, 255);
+			groupBoxSearch.Name = "groupBoxSearch";
+			groupBoxSearch.Size = new Size(835, 50);
+			groupBoxSearch.TabIndex = 12;
+			groupBoxSearch.TabStop = false;
+			groupBoxSearch.Text = "Tìm kiếm";
+			// 
+			// txtSearch
+			// 
+			txtSearch.Location = new Point(100, 19);
+			txtSearch.Name = "txtSearch";
+			txtSearch.Size = new Size(300, 23);
+			txtSearch.TabIndex = 1;
+			txtSearch.TextChanged += txtSearch_TextChanged;
+			// 
+			// lblSearch
+			// 
+			lblSearch.AutoSize = true;
+			lblSearch.Location = new Point(6, 22);
+			lblSearch.Name = "lblSearch";
+			lblSearch.Size = new Size(88, 15);
+			lblSearch.TabIndex = 0;
+			lblSearch.Text = "Tìm theo tên:";
+			// 
 			// groupBoxMaterials
 			// 
 			groupBoxMaterials.Controls.Add(dgvMaterials);
-			groupBoxMaterials.Location = new Point(12, 268);
+			groupBoxMaterials.Location = new Point(12, 311);
 			groupBoxMaterials.Name = "groupBoxMaterials";
-			groupBoxMaterials.Size = new Size(835, 480);
+			groupBoxMaterials.Size = new Size(835, 437);
 			groupBoxMaterials.TabIndex = 0;
 			groupBoxMaterials.TabStop = false;
 			groupBoxMaterials.Text = "Danh sách vật tư";
@@ -283,7 +318,8 @@ namespace Inventory_manager
 			// 
 			// MaterialForm
 			// 
-			ClientSize = new Size(858, 718);
+			ClientSize = new Size(858, 758);
+			Controls.Add(groupBoxSearch);
 			Controls.Add(groupBox1);
 			Controls.Add(groupBoxMaterials);
 			Controls.Add(back);
@@ -294,6 +330,8 @@ namespace Inventory_manager
 			((System.ComponentModel.ISupportInitialize)materialResponeMessageBindingSource).EndInit();
 			groupBox1.ResumeLayout(false);
 			groupBox1.PerformLayout();
+			groupBoxSearch.ResumeLayout(false);
+			groupBoxSearch.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)nbUnits).EndInit();
 			((System.ComponentModel.ISupportInitialize)nbQuantity).EndInit();
 			ResumeLayout(false);
@@ -315,6 +353,9 @@ namespace Inventory_manager
 		private DataGridViewTextBoxColumn unitDataGridViewTextBoxColumn;
 		private DataGridViewTextBoxColumn quantityDataGridViewTextBoxColumn;
 		private DataGridViewTextBoxColumn categoryNameDataGridViewTextBoxColumn;
+		private GroupBox groupBoxSearch;
+		private TextBox txtSearch;
+		private Label lblSearch;
 	}
 }
 

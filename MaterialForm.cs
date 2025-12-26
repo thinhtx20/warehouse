@@ -19,6 +19,7 @@ namespace Inventory_manager
 		private readonly List<MaterialCategoryRespone> _dataCombobox = new List<MaterialCategoryRespone>();
 		private  MaterialCategoryRespone _dataMaterialCombobox = new MaterialCategoryRespone();
 		private List<MaterialResponeMessage> _materialData = new List<MaterialResponeMessage>();
+		private List<MaterialResponeMessage> _materialDataOriginal = new List<MaterialResponeMessage>(); // Lưu dữ liệu gốc để filter
 		private MaterialByIdResponeMessage _materialDataById = new MaterialByIdResponeMessage();
 		private readonly MaterialServices _materialServices;
 		private List<int> lstIds = new List<int>();
@@ -44,6 +45,9 @@ namespace Inventory_manager
 			_dataCombobox.AddRange(data);
 			_materialData.Clear();
 			_materialData = await _materialServices.GetMaterialsAsync(null);
+			// Lưu dữ liệu gốc để filter
+			_materialDataOriginal.Clear();
+			_materialDataOriginal.AddRange(_materialData);
 		}
 		public void LoadCombobox()
 		{
@@ -57,6 +61,40 @@ namespace Inventory_manager
 			dgvMaterials.DataSource = null;
 			dgvMaterials.DataSource = _materialData;
 			///
+		}
+
+		private void txtSearch_TextChanged(object sender, EventArgs e)
+		{
+			FilterMaterials();
+		}
+
+		private void FilterMaterials()
+		{
+			try
+			{
+				var searchText = txtSearch.Text.Trim().ToLower();
+				
+				if (string.IsNullOrEmpty(searchText))
+				{
+					// Nếu ô tìm kiếm trống, hiển thị tất cả dữ liệu gốc
+					_materialData.Clear();
+					_materialData.AddRange(_materialDataOriginal);
+				}
+				else
+				{
+					// Filter dữ liệu theo tên vật tư (không phân biệt hoa thường)
+					_materialData.Clear();
+					_materialData.AddRange(_materialDataOriginal.Where(x => 
+						!string.IsNullOrEmpty(x.MaterialName) && 
+						x.MaterialName.ToLower().Contains(searchText)));
+				}
+				
+				LoadGirdView();
+			}
+			catch (Exception ex)
+			{
+				// Xử lý lỗi nếu có
+			}
 		}
 		private async void btnAdd_Click(object sender, EventArgs e)
 		{
@@ -108,7 +146,8 @@ namespace Inventory_manager
 					// Load lại dữ liệu mới nhất
 					await LoadData();
 					LoadCombobox();
-					LoadGirdView();
+					// Áp dụng lại filter nếu có
+					FilterMaterials();
 					// Clear form
 					btnRefresh_Click(sender, e);
 				}
@@ -162,16 +201,17 @@ namespace Inventory_manager
 			if (result != DialogResult.Yes) return;
 
 			// Thực hiện xóa
-			var deleteResult = await _materialServices.DeleteMaterialsAsync(selectedIds);
-			if (deleteResult)
-			{
-				MessageBox.Show("Xóa vật tư thành công", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-				lstIds.Clear();
-				// Load lại form
-				await LoadData();
-				LoadCombobox();
-				LoadGirdView();
-			}
+				var deleteResult = await _materialServices.DeleteMaterialsAsync(selectedIds);
+				if (deleteResult)
+				{
+					MessageBox.Show("Xóa vật tư thành công", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+					lstIds.Clear();
+					// Load lại form
+					await LoadData();
+					LoadCombobox();
+					// Áp dụng lại filter nếu có
+					FilterMaterials();
+				}
 			else
 			{
 				MessageBox.Show("Xóa vật tư thất bại", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -296,7 +336,8 @@ namespace Inventory_manager
 					// Load lại dữ liệu mới nhất
 					await LoadData();
 					LoadCombobox();
-					LoadGirdView();
+					// Áp dụng lại filter nếu có
+					FilterMaterials();
 					// Clear form
 					btnRefresh_Click(sender, e);
 				}
