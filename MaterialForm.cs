@@ -19,6 +19,7 @@ namespace Inventory_manager
         private readonly List<MaterialCategoryRespone> _dataCombobox = new List<MaterialCategoryRespone>();
         private MaterialCategoryRespone _dataMaterialCombobox = new MaterialCategoryRespone();
         private List<MaterialResponeMessage> _materialData = new List<MaterialResponeMessage>();
+        private List<MaterialResponeMessage> _materialDataOriginal = new List<MaterialResponeMessage>(); // Lưu dữ liệu gốc để filter
         private MaterialByIdResponeMessage _materialDataById = new MaterialByIdResponeMessage();
         private readonly MaterialServices _materialServices;
         private List<int> lstIds = new List<int>();
@@ -28,6 +29,9 @@ namespace Inventory_manager
             _currentUser = user;
             _materialServices = new MaterialServices();
             InitializeComponent();
+            // Gán event handlers cho tìm kiếm
+            btnSearch.Click += btnSearch_Click;
+            txtSearch.TextChanged += txtSearch_TextChanged;
             this.Load += FormLoad;
         }
         public async void FormLoad(object sender, EventArgs e)
@@ -44,6 +48,9 @@ namespace Inventory_manager
             _dataCombobox.AddRange(data);
             _materialData.Clear();
             _materialData = await _materialServices.GetMaterialsAsync(null);
+            // Lưu dữ liệu gốc để filter
+            _materialDataOriginal.Clear();
+            _materialDataOriginal.AddRange(_materialData);
         }
         public void LoadCombobox()
         {
@@ -108,7 +115,8 @@ namespace Inventory_manager
                     // Load lại dữ liệu mới nhất
                     await LoadData();
                     LoadCombobox();
-                    LoadGirdView();
+                    // Áp dụng lại filter nếu có
+                    FilterMaterials();
                     // Clear form
                     btnRefresh_Click(sender, e);
                 }
@@ -170,7 +178,8 @@ namespace Inventory_manager
                 // Load lại form
                 await LoadData();
                 LoadCombobox();
-                LoadGirdView();
+                // Áp dụng lại filter nếu có
+                FilterMaterials();
             }
             else
             {
@@ -296,7 +305,8 @@ namespace Inventory_manager
                     // Load lại dữ liệu mới nhất
                     await LoadData();
                     LoadCombobox();
-                    LoadGirdView();
+                    // Áp dụng lại filter nếu có
+                    FilterMaterials();
                     // Clear form
                     btnRefresh_Click(sender, e);
                 }
@@ -322,6 +332,45 @@ namespace Inventory_manager
         private void label4_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void btnSearch_Click(object sender, EventArgs e)
+        {
+            FilterMaterials();
+        }
+
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            FilterMaterials();
+        }
+
+        private void FilterMaterials()
+        {
+            try
+            {
+                var searchText = txtSearch.Text.Trim().ToLower();
+                
+                if (string.IsNullOrEmpty(searchText))
+                {
+                    // Nếu ô tìm kiếm trống, hiển thị tất cả dữ liệu gốc
+                    _materialData.Clear();
+                    _materialData.AddRange(_materialDataOriginal);
+                }
+                else
+                {
+                    // Filter dữ liệu theo tên vật tư (contains, không phân biệt hoa thường)
+                    _materialData.Clear();
+                    _materialData.AddRange(_materialDataOriginal.Where(x => 
+                        !string.IsNullOrEmpty(x.MaterialName) && 
+                        x.MaterialName.ToLower().Contains(searchText)));
+                }
+                
+                LoadGirdView();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi tìm kiếm: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }
