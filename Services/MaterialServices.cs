@@ -227,5 +227,35 @@ namespace Inventory_manager.Services
 			};
 			return resp;
 		}
+		/// <summary>
+		/// Kiểm tra tên vật tư đã tồn tại chưa
+		/// </summary>
+		/// <param name="materialName">Tên vật tư cần kiểm tra</param>
+		/// <param name="excludeMaterialId">ID vật tư cần loại trừ (khi sửa, null khi thêm)</param>
+		/// <returns>True nếu tên đã tồn tại, False nếu chưa tồn tại</returns>
+		public async Task<bool> IsMaterialNameExistsAsync(string materialName, int? excludeMaterialId = null)
+		{
+			try
+			{
+				using var _context = new WarehousesManagerContext();
+				
+				var query = _context.Materials.AsNoTracking()
+					.Where(x => x.IsActive == true && 
+						x.MaterialName != null && 
+						x.MaterialName.Trim().ToLower() == materialName.Trim().ToLower());
+
+				// Nếu là sửa, loại trừ vật tư hiện tại
+				if (excludeMaterialId.HasValue)
+				{
+					query = query.Where(x => x.MaterialId != excludeMaterialId.Value);
+				}
+
+				return await query.AnyAsync();
+			}
+			catch
+			{
+				return false;
+			}
+		}
 	}
 }

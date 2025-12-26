@@ -70,7 +70,7 @@ namespace Inventory_manager
 				}
 				if (string.IsNullOrEmpty(txtMaterialName.Text))
 				{
-					MessageBox.Show("Vui lòng chọn nhập tên danh mục", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					MessageBox.Show("Vui lòng nhập tên vật tư", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 					return;
 				}
 				if (nbQuantity.Value <= 0)
@@ -83,9 +83,19 @@ namespace Inventory_manager
 					MessageBox.Show("Giá nhập lớn hơn 0", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 					return;
 				}
+
+				// Kiểm tra tên vật tư đã tồn tại chưa (khi thêm)
+				var materialName = txtMaterialName.Text.Trim();
+				var isExists = await _materialServices.IsMaterialNameExistsAsync(materialName);
+				if (isExists)
+				{
+					MessageBox.Show("Tên vật tư đã tồn tại. Vui lòng nhập tên khác.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+
 				var request = new CreatedMaterialRequestModel()
 				{
-					Name = txtMaterialName.Text,
+					Name = materialName,
 					CategoryId = Convert.ToInt32(categoryId.ToString()),
 					Description = txtDescription.Text,
 					Quantity = Convert.ToInt32(nbQuantity.Value),
@@ -244,7 +254,7 @@ namespace Inventory_manager
 				}
 				if (string.IsNullOrEmpty(txtMaterialName.Text))
 				{
-					MessageBox.Show("Vui lòng chọn nhập tên danh mục", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					MessageBox.Show("Vui lòng nhập tên vật tư", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 					return;
 				}
 				if (nbQuantity.Value <= 0)
@@ -257,10 +267,22 @@ namespace Inventory_manager
 					MessageBox.Show("Giá nhập lớn hơn 0", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 					return;
 				}
+
+				var currentMaterialId = lstIds.First();
+				var materialName = txtMaterialName.Text.Trim();
+
+				// Kiểm tra tên vật tư đã tồn tại ở vật tư khác chưa (khi sửa, loại trừ vật tư hiện tại)
+				var isExists = await _materialServices.IsMaterialNameExistsAsync(materialName, currentMaterialId);
+				if (isExists)
+				{
+					MessageBox.Show("Tên vật tư đã tồn tại ở vật tư khác. Vui lòng nhập tên khác.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+
 				var request = new UpdateMaterialRequestModel()
 				{
-					Id = lstIds.First(),
-					Name = txtMaterialName.Text,
+					Id = currentMaterialId,
+					Name = materialName,
 					CategoryId = Convert.ToInt32(categoryId.ToString()),
 					Description = txtDescription.Text,
 					Quantity = Convert.ToInt32(nbQuantity.Value),
