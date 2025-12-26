@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -344,11 +345,34 @@ namespace Inventory_manager
             FilterMaterials();
         }
 
+        /// <summary>
+        /// Chuyển đổi chuỗi tiếng Việt có dấu sang không dấu
+        /// </summary>
+        private string RemoveVietnameseDiacritics(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            var normalizedString = text.Normalize(NormalizationForm.FormD);
+            var stringBuilder = new StringBuilder();
+
+            foreach (var c in normalizedString)
+            {
+                var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+                if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+                {
+                    stringBuilder.Append(c);
+                }
+            }
+
+            return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
+        }
+
         private void FilterMaterials()
         {
             try
             {
-                var searchText = txtSearch.Text.Trim().ToLower();
+                var searchText = txtSearch.Text.Trim();
                 
                 if (string.IsNullOrEmpty(searchText))
                 {
@@ -358,11 +382,14 @@ namespace Inventory_manager
                 }
                 else
                 {
-                    // Filter dữ liệu theo tên vật tư (contains, không phân biệt hoa thường)
+                    // Chuyển đổi searchText sang không dấu và lowercase
+                    var searchTextNoAccent = RemoveVietnameseDiacritics(searchText).ToLower();
+                    
+                    // Filter dữ liệu theo tên vật tư (contains, không phân biệt hoa thường và không dấu)
                     _materialData.Clear();
                     _materialData.AddRange(_materialDataOriginal.Where(x => 
                         !string.IsNullOrEmpty(x.MaterialName) && 
-                        x.MaterialName.ToLower().Contains(searchText)));
+                        RemoveVietnameseDiacritics(x.MaterialName).ToLower().Contains(searchTextNoAccent)));
                 }
                 
                 LoadGirdView();
