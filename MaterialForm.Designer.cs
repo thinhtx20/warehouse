@@ -53,7 +53,6 @@ namespace Inventory_manager
             label1 = new Label();
             toolTip1 = new ToolTip(components);
             txtSearch = new TextBox();
-            btnSearch = new Button();
             txtlablesearch = new Label();
             groupBoxMaterials.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvMaterials).BeginInit();
@@ -160,29 +159,35 @@ namespace Inventory_manager
             // 
             // btnAdd
             // 
+            btnAdd.BackColor = Color.FromArgb(128, 255, 128);
             btnAdd.Location = new Point(421, 23);
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new Size(100, 40);
             btnAdd.TabIndex = 7;
             btnAdd.Text = "Thêm";
+            btnAdd.UseVisualStyleBackColor = false;
             btnAdd.Click += btnAdd_Click;
             // 
             // btnUpdate
             // 
+            btnUpdate.BackColor = Color.FromArgb(255, 255, 128);
             btnUpdate.Location = new Point(421, 86);
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(100, 40);
             btnUpdate.TabIndex = 8;
             btnUpdate.Text = "Sửa";
+            btnUpdate.UseVisualStyleBackColor = false;
             btnUpdate.Click += btnUpdate_Click;
             // 
             // btnDelete
             // 
+            btnDelete.BackColor = Color.FromArgb(255, 128, 128);
             btnDelete.Location = new Point(421, 132);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(100, 40);
             btnDelete.TabIndex = 9;
             btnDelete.Text = "Xóa";
+            btnDelete.UseVisualStyleBackColor = false;
             btnDelete.Click += btnDelete_Click;
             // 
             // btnRefresh
@@ -288,30 +293,20 @@ namespace Inventory_manager
             txtSearch.Size = new Size(200, 39);
             txtSearch.TabIndex = 12;
             // 
-            // btnSearch
-            // 
-            btnSearch.Location = new Point(634, 203);
-            btnSearch.Name = "btnSearch";
-            btnSearch.Size = new Size(150, 46);
-            btnSearch.TabIndex = 13;
-            btnSearch.Text = "Tìm kiếm";
-            btnSearch.UseVisualStyleBackColor = true;
-            // 
             // txtlablesearch
             // 
             txtlablesearch.AutoSize = true;
-            txtlablesearch.Location = new Point(616, 82);
+            txtlablesearch.Location = new Point(616, 106);
             txtlablesearch.Name = "txtlablesearch";
             txtlablesearch.Size = new Size(279, 32);
             txtlablesearch.TabIndex = 14;
-            txtlablesearch.Text = "Tìm kiếm theo tên vật tu";
+            txtlablesearch.Text = "Tìm kiếm theo tên vật tư";
             txtlablesearch.Click += label4_Click;
             // 
             // MaterialForm
             // 
             ClientSize = new Size(858, 718);
             Controls.Add(txtlablesearch);
-            Controls.Add(btnSearch);
             Controls.Add(txtSearch);
             Controls.Add(groupBox1);
             Controls.Add(groupBoxMaterials);
@@ -347,7 +342,6 @@ namespace Inventory_manager
 		private DataGridViewTextBoxColumn quantityDataGridViewTextBoxColumn;
 		private DataGridViewTextBoxColumn categoryNameDataGridViewTextBoxColumn;
         private TextBox txtSearch;
-        private Button btnSearch;
         private Label txtlablesearch;
     }
 }

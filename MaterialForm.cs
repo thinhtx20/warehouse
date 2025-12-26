@@ -31,7 +31,6 @@ namespace Inventory_manager
             _materialServices = new MaterialServices();
             InitializeComponent();
             // Gán event handlers cho tìm kiếm
-            btnSearch.Click += btnSearch_Click;
             txtSearch.TextChanged += txtSearch_TextChanged;
             this.Load += FormLoad;
         }
