@@ -112,13 +112,48 @@ namespace Inventory_manager
 
 		}
 
-		private void btnDelete_Click(object sender, EventArgs e)
+		private async void btnDelete_Click(object sender, EventArgs e)
 		{
-			if (lstIds.Any())
+			// Lấy danh sách ID từ các checkbox đã được check
+			var selectedIds = new List<int>();
+			foreach (DataGridViewRow row in dgvMaterials.Rows)
 			{
-				_materialServices.DeleteMaterialsAsync(lstIds);
-				// load form khi ta
-				FormLoad(this, EventArgs.Empty);
+				if (row.IsNewRow) continue;
+				var checkboxCell = row.Cells["materialCick"] as DataGridViewCheckBoxCell;
+				if (checkboxCell != null && checkboxCell.Value != null && (bool)checkboxCell.Value == true)
+				{
+					var materialId = Convert.ToInt32(row.Cells["materialIdDataGridViewTextBoxColumn"].Value);
+					if (materialId > 0)
+					{
+						selectedIds.Add(materialId);
+					}
+				}
+			}
+
+			if (!selectedIds.Any())
+			{
+				MessageBox.Show("Vui lòng chọn vật tư cần xóa", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				return;
+			}
+
+			// Xác nhận xóa
+			var result = MessageBox.Show($"Bạn có chắc chắn muốn xóa {selectedIds.Count} vật tư đã chọn?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+			if (result != DialogResult.Yes) return;
+
+			// Thực hiện xóa
+			var deleteResult = await _materialServices.DeleteMaterialsAsync(selectedIds);
+			if (deleteResult)
+			{
+				MessageBox.Show("Xóa vật tư thành công", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+				lstIds.Clear();
+				// Load lại form
+				await LoadData();
+				LoadCombobox();
+				LoadGirdView();
+			}
+			else
+			{
+				MessageBox.Show("Xóa vật tư thất bại", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 		}
 
@@ -128,10 +163,10 @@ namespace Inventory_manager
 			if (e.RowIndex < 0) return;
 			_materialDataById = null;
 
-			// Lấy ID vật liệu từ cell "materialCick"
+			// Lấy ID vật liệu từ cell
 			var cellValue = Convert.ToInt32(dgvMaterials.Rows[e.RowIndex].Cells["materialIdDataGridViewTextBoxColumn"].Value);
 			if (cellValue == null) return;
-			lstIds.Add(cellValue);
+
 			// Kiểm tra xem cột checkbox là cột "materialCick"
 			if (dgvMaterials.Columns[e.ColumnIndex] is DataGridViewCheckBoxColumn &&
 				dgvMaterials.Columns[e.ColumnIndex].Name == "materialCick")
@@ -146,8 +181,10 @@ namespace Inventory_manager
 					// Commit để hiển thị ngay
 					dgvMaterials.CommitEdit(DataGridViewDataErrorContexts.Commit);
 				}
+				return; // Không load form khi chỉ click checkbox
 			}
-			// Lấy vật liệu theo ID
+
+			// Lấy vật liệu theo ID để hiển thị thông tin
 			_materialDataById = await _materialServices.MaterialById(cellValue);
 			if (_materialDataById == null) return;
 

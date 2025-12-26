@@ -146,38 +146,49 @@ namespace Inventory_manager.Services
 		}
 		public async Task<bool> DeleteMaterialsAsync(List<int>? ids)
 		{
+			if (ids == null || !ids.Any())
+				return false;
+
 			using var _context = new WarehousesManagerContext();
 
 			try
 			{
 				foreach (var item in ids)
 				{
-
 					var material = await _context.Materials
 						.FirstOrDefaultAsync(x => x.MaterialId == item);
 
 					if (material == null)
-						return false;
-					var deleInventoryIssueDetail = await _context.InventoryIssueDetails.FirstOrDefaultAsync(x => x.MaterialId == item);
-					var InventoryReceiptDetail = await _context.InventoryReceiptDetails.FirstOrDefaultAsync(x => x.MaterialId == item);
-					var StockLog = await _context.StockLogs.FirstOrDefaultAsync(x => x.MaterialId == item);
-					var Stock = await _context.Stocks.FirstOrDefaultAsync(x => x.MaterialId == item);
+						continue; // Bỏ qua nếu không tìm thấy, tiếp tục xóa các item khác
 
-					if (Stock != null)
-						_context.Stocks.Remove(Stock);
-					if (StockLog != null)
-						_context.StockLogs.Remove(StockLog);
-					if (InventoryReceiptDetail != null)
-						_context.InventoryReceiptDetails.Remove(InventoryReceiptDetail);
-					if (deleInventoryIssueDetail != null)
-						_context.InventoryIssueDetails.Remove(deleInventoryIssueDetail);
+					// Xóa tất cả các records liên quan (không chỉ record đầu tiên)
+					var inventoryIssueDetails = await _context.InventoryIssueDetails
+						.Where(x => x.MaterialId == item).ToListAsync();
+					var inventoryReceiptDetails = await _context.InventoryReceiptDetails
+						.Where(x => x.MaterialId == item).ToListAsync();
+					var stockLogs = await _context.StockLogs
+						.Where(x => x.MaterialId == item).ToListAsync();
+					var stocks = await _context.Stocks
+						.Where(x => x.MaterialId == item).ToListAsync();
+
+					// Xóa các records liên quan
+					if (stocks.Any())
+						_context.Stocks.RemoveRange(stocks);
+					if (stockLogs.Any())
+						_context.StockLogs.RemoveRange(stockLogs);
+					if (inventoryReceiptDetails.Any())
+						_context.InventoryReceiptDetails.RemoveRange(inventoryReceiptDetails);
+					if (inventoryIssueDetails.Any())
+						_context.InventoryIssueDetails.RemoveRange(inventoryIssueDetails);
+
+					// Xóa material (hard delete)
 					_context.Materials.Remove(material);
 				}
 				await _context.SaveChangesAsync();
 
 				return true;
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
 				return false;
 			}
