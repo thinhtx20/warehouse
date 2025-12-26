@@ -12,8 +12,9 @@ namespace Inventory_manager.dto.Response
 		public string MaterialName { get; set; }
 		public decimal Unit { get; set; }
 		public int Quantity { get; set; }
-		//public int CategoryId { get; set; }
-		public string CategoryName { get; set; }
+		public int QuantitySL { get; set; }
+        //public int CategoryId { get; set; }
+        public string CategoryName { get; set; }
 	}
 	public class WarehouseMaterialRespone
 	{

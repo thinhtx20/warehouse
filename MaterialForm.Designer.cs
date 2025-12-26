@@ -269,8 +269,8 @@ namespace Inventory_manager
 			// 
 			// quantityDataGridViewTextBoxColumn
 			// 
-			quantityDataGridViewTextBoxColumn.DataPropertyName = "Quantity";
-			quantityDataGridViewTextBoxColumn.HeaderText = "Số lượng trong kho";
+			quantityDataGridViewTextBoxColumn.DataPropertyName = "QuantitySL";
+			quantityDataGridViewTextBoxColumn.HeaderText = "Số lượng trong kho 1";
 			quantityDataGridViewTextBoxColumn.Name = "quantityDataGridViewTextBoxColumn";
 			quantityDataGridViewTextBoxColumn.ReadOnly = true;
 			// 

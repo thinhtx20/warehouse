@@ -28,7 +28,7 @@ namespace Inventory_manager.Services
 					MaterialId = x.MaterialId,
 					MaterialName = x.MaterialName,
 					Unit = x.Unit,
-
+					QuantitySL = x.Quantity
 				}).ToListAsync();
 			foreach (var item in query)
 			{
@@ -207,7 +207,7 @@ namespace Inventory_manager.Services
 					MaterialId = materialId,
 					MaterialName = material.MaterialName,
 					Quantity = material.Quantity,
-					CategoryId = material.CategoryId,
+					CategoryId = material.CategoryId.Value,
 					Unit = material.Unit
 				};
 				return resp;
