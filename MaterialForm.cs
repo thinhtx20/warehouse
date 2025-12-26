@@ -58,7 +58,7 @@ namespace Inventory_manager
 			dgvMaterials.DataSource = _materialData;
 			///
 		}
-		private void btnAdd_Click(object sender, EventArgs e)
+		private async void btnAdd_Click(object sender, EventArgs e)
 		{
 			try
 			{
@@ -91,14 +91,25 @@ namespace Inventory_manager
 					Quantity = Convert.ToInt32(nbQuantity.Value),
 					Units = Convert.ToInt32(nbUnits.Value),
 				};
-				_materialServices.CreatedMaterialsAsync(request);
-				// load form khi ta
-				FormLoad(this, EventArgs.Empty);
-				return;
+				var result = await _materialServices.CreatedMaterialsAsync(request);
+				if (result)
+				{
+					MessageBox.Show("Thêm vật tư thành công", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+					// Load lại dữ liệu mới nhất
+					await LoadData();
+					LoadCombobox();
+					LoadGirdView();
+					// Clear form
+					btnRefresh_Click(sender, e);
+				}
+				else
+				{
+					MessageBox.Show("Thêm vật tư thất bại", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				}
 			}
 			catch (Exception ex)
 			{
-				return;
+				MessageBox.Show($"Lỗi: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 		}
 
@@ -109,7 +120,7 @@ namespace Inventory_manager
 			cbbCategory.SelectedIndex = -1;
 			nbQuantity.Value = 0;
 			nbUnits.Value = 0;
-
+			lstIds.Clear();
 		}
 
 		private async void btnDelete_Click(object sender, EventArgs e)
@@ -184,6 +195,10 @@ namespace Inventory_manager
 				return; // Không load form khi chỉ click checkbox
 			}
 
+			// Set lstIds để biết đang sửa vật tư nào (chỉ 1 item)
+			lstIds.Clear();
+			lstIds.Add(cellValue);
+
 			// Lấy vật liệu theo ID để hiển thị thông tin
 			_materialDataById = await _materialServices.MaterialById(cellValue);
 			if (_materialDataById == null) return;
@@ -207,10 +222,20 @@ namespace Inventory_manager
 		}
 
 
-		private void btnUpdate_Click(object sender, EventArgs e)
+		private async void btnUpdate_Click(object sender, EventArgs e)
 		{
 			try
 			{
+				if (!lstIds.Any())
+				{
+					MessageBox.Show("Vui lòng chọn vật tư cần sửa", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+				if (lstIds.Count > 1)
+				{
+					MessageBox.Show("Chỉ có thể sửa 1 vật liệu", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
 				var categoryId = cbbCategory.SelectedValue;
 				if (categoryId is null || string.IsNullOrEmpty(categoryId.ToString()))
 				{
@@ -232,11 +257,6 @@ namespace Inventory_manager
 					MessageBox.Show("Giá nhập lớn hơn 0", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 					return;
 				}
-				if (lstIds.Count > 1)
-				{
-					MessageBox.Show("Chỉ có thể sửa 1 vật liệu", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-					return;
-				}
 				var request = new UpdateMaterialRequestModel()
 				{
 					Id = lstIds.First(),
@@ -246,14 +266,26 @@ namespace Inventory_manager
 					Quantity = Convert.ToInt32(nbQuantity.Value),
 					Units = Convert.ToInt32(nbUnits.Value),
 				};
-				_materialServices.UpdateMaterialsAsync(request);
-				// load form khi ta
-				FormLoad(this, EventArgs.Empty);
-				return;
+				var result = await _materialServices.UpdateMaterialsAsync(request);
+				if (result)
+				{
+					MessageBox.Show("Sửa vật tư thành công", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+					lstIds.Clear();
+					// Load lại dữ liệu mới nhất
+					await LoadData();
+					LoadCombobox();
+					LoadGirdView();
+					// Clear form
+					btnRefresh_Click(sender, e);
+				}
+				else
+				{
+					MessageBox.Show("Sửa vật tư thất bại", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				}
 			}
 			catch (Exception ex)
 			{
-				return;
+				MessageBox.Show($"Lỗi: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 		}
 
