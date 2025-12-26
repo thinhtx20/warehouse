@@ -29,6 +29,8 @@ namespace Inventory_manager
 			_currentUser = user;
 			_materialServices = new MaterialServices();
 			InitializeComponent();
+			// Gán event handler sau khi InitializeComponent
+			txtSearch.TextChanged += txtSearch_TextChanged;
 			this.Load += FormLoad;
 		}
 		public async void FormLoad(object sender, EventArgs e)

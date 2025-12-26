@@ -4,6 +4,9 @@ namespace Inventory_manager
 {
 	partial class MaterialForm
 	{
+		/// <summary>
+		/// Required designer variable.
+		/// </summary>
 		private System.ComponentModel.IContainer components = null;
 		private System.Windows.Forms.GroupBox groupBoxMaterials;
 		private System.Windows.Forms.DataGridView dgvMaterials;
@@ -14,9 +17,9 @@ namespace Inventory_manager
 		private System.Windows.Forms.Button btnRefresh;
 		private System.Windows.Forms.Label lblName;
 		private System.Windows.Forms.Label lblUnit;
+		private System.Windows.Forms.GroupBox groupBoxSearch;
 		private System.Windows.Forms.TextBox txtSearch;
 		private System.Windows.Forms.Label lblSearch;
-		private System.Windows.Forms.GroupBox groupBoxSearch;
 
 		protected override void Dispose(bool disposing)
 		{
@@ -85,7 +88,7 @@ namespace Inventory_manager
 			txtSearch.Name = "txtSearch";
 			txtSearch.Size = new Size(300, 23);
 			txtSearch.TabIndex = 1;
-			txtSearch.TextChanged += txtSearch_TextChanged;
+			// txtSearch.TextChanged += txtSearch_TextChanged; // Will be set in MaterialForm.cs constructor
 			// 
 			// lblSearch
 			// 
