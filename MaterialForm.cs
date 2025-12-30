@@ -189,37 +189,38 @@ namespace Inventory_manager
 
         private async void dgvMaterials_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            // Chống click header hoặc row lỗi
-            if (e.RowIndex < 0) return;
-            _materialDataById = null;
+            // Chặn click header / vùng invalid
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
 
-            // Lấy ID vật liệu từ cell
-            var cellValue = Convert.ToInt32(dgvMaterials.Rows[e.RowIndex].Cells["materialIdDataGridViewTextBoxColumn"].Value);
-            if (cellValue == null) return;
+            var row = dgvMaterials.Rows[e.RowIndex];
+            if (row.IsNewRow) return;
 
-            // Kiểm tra xem cột checkbox là cột "materialCick"
-            if (dgvMaterials.Columns[e.ColumnIndex] is DataGridViewCheckBoxColumn &&
-                dgvMaterials.Columns[e.ColumnIndex].Name == "materialCick")
+            // Nếu click checkbox materialCick thì toggle và thoát
+            if (dgvMaterials.Columns[e.ColumnIndex].Name == "materialCick")
             {
-                var cell = dgvMaterials.Rows[e.RowIndex].Cells[e.ColumnIndex] as DataGridViewCheckBoxCell;
+                var cell = row.Cells[e.ColumnIndex] as DataGridViewCheckBoxCell;
                 if (cell != null)
                 {
-                    // Toggle giá trị
                     bool currentValue = (bool?)(cell.Value) ?? false;
                     cell.Value = !currentValue;
-
-                    // Commit để hiển thị ngay
                     dgvMaterials.CommitEdit(DataGridViewDataErrorContexts.Commit);
                 }
-                return; // Không load form khi chỉ click checkbox
+                return;
             }
 
-            // Set lstIds để biết đang sửa vật tư nào (chỉ 1 item)
-            lstIds.Clear();
-            lstIds.Add(cellValue);
+            // Lấy ID an toàn
+            var idCell = row.Cells["materialIdDataGridViewTextBoxColumn"];
+            if (idCell == null) return;
 
-            // Lấy vật liệu theo ID để hiển thị thông tin
-            _materialDataById = await _materialServices.MaterialById(cellValue);
+            if (idCell.Value == null || idCell.Value == DBNull.Value) return;
+            if (!int.TryParse(idCell.Value.ToString(), out var materialId)) return;
+
+            // Set lstIds
+            lstIds.Clear();
+            lstIds.Add(materialId);
+
+            // Load data
+            _materialDataById = await _materialServices.MaterialById(materialId);
             if (_materialDataById == null) return;
 
             txtDescription.Text = _materialDataById.Description;
@@ -227,15 +228,17 @@ namespace Inventory_manager
             nbQuantity.Value = _materialDataById.Quantity;
             nbUnits.Value = _materialDataById.Unit;
 
-            // Gán lại datasource một lần (đảm bảo combobox đã có dữ liệu)
-            cbbCategory.DataSource = null;
-            cbbCategory.DataSource = _dataCombobox;
-            cbbCategory.DisplayMember = "Name";
-            cbbCategory.ValueMember = "Id";
-
-            // Chọn đúng category của material bằng CategoryId từ _materialDataById
-            if (_materialDataById.CategoryId > 0)
+            // ComboBox: đừng set lại datasource mỗi lần click (dễ lỗi + lag)
+            // Chỉ set 1 lần ở Form_Load. Ở đây chỉ SelectedValue.
+            if (_dataCombobox != null && _dataCombobox.Count > 0)
             {
+                if (cbbCategory.DataSource == null)
+                {
+                    cbbCategory.DataSource = _dataCombobox;
+                    cbbCategory.DisplayMember = "Name";
+                    cbbCategory.ValueMember = "Id";
+                }
+
                 cbbCategory.SelectedValue = _materialDataById.CategoryId;
             }
         }

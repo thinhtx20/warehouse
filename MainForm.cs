@@ -162,7 +162,7 @@ namespace Inventory_manager
 			// 
 			// quantityDataGridViewTextBoxColumn
 			// 
-			quantityDataGridViewTextBoxColumn.DataPropertyName = "Quantity";
+			quantityDataGridViewTextBoxColumn.DataPropertyName = "QuantitySL";
 			quantityDataGridViewTextBoxColumn.HeaderText = "Số Lượng";
 			quantityDataGridViewTextBoxColumn.MinimumWidth = 6;
 			quantityDataGridViewTextBoxColumn.Name = "quantityDataGridViewTextBoxColumn";
