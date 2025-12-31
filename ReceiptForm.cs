@@ -204,24 +204,31 @@ namespace Inventory_manager
 			}
 		}
 
-		private void btnUpdate_Click(object sender, EventArgs e)
+		private async void btnUpdate_Click(object sender, EventArgs e)
 		{
 			try
 			{
+				if (!lstIds.Any())
+				{
+					MessageBox.Show("Vui lòng chọn phiếu cần sửa", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
 				if (lstIds.Count > 1)
 				{
 					MessageBox.Show("Chỉ có thể chỉnh sửa 1 phiếu", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 					return;
 				}
-				if (lstIds == null)
+				if (cbWarehouse.SelectedValue is null || string.IsNullOrEmpty(cbWarehouse.SelectedValue.ToString()))
 				{
-					MessageBox.Show("Vui lòng chọn phiếu cần sửa", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					MessageBox.Show("Vui lòng chọn kho", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 					return;
 				}
 				var body = new ReceiptUpdateRequestModels()
 				{
 					RececiptId = lstIds.First(),
-					WarehouseId = cbWarehouse.SelectedIndex,
+					WarehouseId = int.Parse(cbWarehouse.SelectedValue.ToString()),
+					Desciptions = txtDescription.Text,
+					CreatedAt = dtCreatedAt.Value,
 					Items = new List<ReceiptItem>()
 				};
 				foreach (DataGridViewRow row in dgvReceipts.Rows)
@@ -231,18 +238,36 @@ namespace Inventory_manager
 					var selected = row.Cells["cbDgvReceiptForm"].Value;
 					if (selected != null && (bool)selected == true)
 					{
+						var quantityReceiptValue = row.Cells["QuantityReceipt"].Value;
+						if (quantityReceiptValue == null || string.IsNullOrEmpty(quantityReceiptValue.ToString()))
+						{
+							MessageBox.Show("Vui lòng nhập số lượng cho vật tư đã chọn", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+							return;
+						}
 						body.Items.Add(new ReceiptItem()
 						{
 							MaterialId = Convert.ToInt32(row.Cells["materialIdDataGridViewTextBoxColumn"].Value),
-							Quantity = Convert.ToInt32(row.Cells["Quantity"].Value),
+							Quantity = Convert.ToInt32(quantityReceiptValue),
 							UnitPrice = Convert.ToDecimal(row.Cells["unitDataGridViewTextBoxColumn"].Value)
 						});
 					}
 				}
-				_inventoryService.UpdateReceipt(body);
-				MessageBox.Show("Cập nhật phiếu thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
-				// load form khi ta
-				ReceiptForm_Load(this, EventArgs.Empty);
+				if (!body.Items.Any())
+				{
+					MessageBox.Show("Vui lòng chọn ít nhất một vật tư", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+				var result = await _inventoryService.UpdateReceipt(body);
+				if (result)
+				{
+					MessageBox.Show("Cập nhật phiếu thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
+					// load form khi ta
+					ReceiptForm_Load(this, EventArgs.Empty);
+				}
+				else
+				{
+					MessageBox.Show("Cập nhật phiếu thất bại", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				}
 			}
 			catch (Exception ex)
 			{

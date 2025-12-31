@@ -212,6 +212,21 @@ namespace Inventory_manager.Services
 			}
 
 			receipt.InventoryReceiptDetails = newDetails;
+			
+			// Cập nhật mô tả và ngày tạo nếu có
+			if (!string.IsNullOrEmpty(request.Desciptions))
+			{
+				receipt.Description = request.Desciptions;
+			}
+			if (request.CreatedAt.HasValue)
+			{
+				receipt.CreatedAt = request.CreatedAt.Value;
+			}
+			if (receipt.WarehouseId != request.WarehouseId)
+			{
+				receipt.WarehouseId = request.WarehouseId;
+			}
+			
 			await _db.SaveChangesAsync();
 
 			return true;

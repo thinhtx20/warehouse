@@ -24,6 +24,8 @@ namespace Inventory_manager.dto.Request
 	{
 		public int RececiptId { get; set; }
 		public int WarehouseId { get; set; }
+		public string? Desciptions { get; set; }
+		public DateTime? CreatedAt { get; set; }
 		public List<ReceiptItem> Items { get; set; } = new List<ReceiptItem>();
 	}
 	public class IssueRequestModels
