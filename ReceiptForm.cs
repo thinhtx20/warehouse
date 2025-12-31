@@ -3,6 +3,8 @@ using Inventory_manager.dto.Request;
 using Inventory_manager.dto.Response;
 using Inventory_manager.Models;
 using Inventory_manager.Services;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -101,10 +103,22 @@ namespace Inventory_manager
 							MessageBox.Show("Vui lòng nhập số lượng cho vật tư đã chọn", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 							return;
 						}
+						
+						var materialId = Convert.ToInt32(row.Cells["materialIdDataGridViewTextBoxColumn"].Value);
+						var quantityReceipt = Convert.ToInt32(quantityReceiptValue);
+						
+						// Kiểm tra số lượng nhập không được vượt quá số lượng vật tư hiện có
+						var material = _materialData.FirstOrDefault(m => m.MaterialId == materialId);
+						if (material != null && quantityReceipt > material.QuantitySL)
+						{
+							MessageBox.Show($"Vật tư '{material.MaterialName}' có số lượng không được quá số lượng vật tư hiện có ({material.QuantitySL})", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+							return;
+						}
+						
 						body.Items.Add(new ReceiptItem()
 						{
-							MaterialId = Convert.ToInt32(row.Cells["materialIdDataGridViewTextBoxColumn"].Value),
-							Quantity = Convert.ToInt32(quantityReceiptValue),
+							MaterialId = materialId,
+							Quantity = quantityReceipt,
 							UnitPrice = Convert.ToDecimal(row.Cells["unitDataGridViewTextBoxColumn"].Value)
 						});
 					}
@@ -244,10 +258,22 @@ namespace Inventory_manager
 							MessageBox.Show("Vui lòng nhập số lượng cho vật tư đã chọn", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 							return;
 						}
+						
+						var materialId = Convert.ToInt32(row.Cells["materialIdDataGridViewTextBoxColumn"].Value);
+						var quantityReceipt = Convert.ToInt32(quantityReceiptValue);
+						
+						// Kiểm tra số lượng nhập không được vượt quá số lượng vật tư hiện có
+						var material = _materialData.FirstOrDefault(m => m.MaterialId == materialId);
+						if (material != null && quantityReceipt > material.QuantitySL)
+						{
+							MessageBox.Show($"Vật tư '{material.MaterialName}' có số lượng không được quá số lượng vật tư hiện có ({material.QuantitySL})", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+							return;
+						}
+						
 						body.Items.Add(new ReceiptItem()
 						{
-							MaterialId = Convert.ToInt32(row.Cells["materialIdDataGridViewTextBoxColumn"].Value),
-							Quantity = Convert.ToInt32(quantityReceiptValue),
+							MaterialId = materialId,
+							Quantity = quantityReceipt,
 							UnitPrice = Convert.ToDecimal(row.Cells["unitDataGridViewTextBoxColumn"].Value)
 						});
 					}
@@ -301,6 +327,106 @@ namespace Inventory_manager
 		{
 
 			ReceiptForm_Load(this, EventArgs.Empty);
+		}
+
+		private void btnExportExcel_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				if (_receiptData == null || !_receiptData.Any())
+				{
+					MessageBox.Show("Không có dữ liệu để xuất Excel", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+					return;
+				}
+
+				using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+				{
+					saveFileDialog.Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*";
+					saveFileDialog.FilterIndex = 1;
+					saveFileDialog.FileName = $"DanhSachPhieuNhap_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+					if (saveFileDialog.ShowDialog() == DialogResult.OK)
+					{
+						ExportReceiptsToExcel(_receiptData, saveFileDialog.FileName);
+						MessageBox.Show("Xuất Excel thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"Lỗi khi xuất Excel: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
+
+		private void ExportReceiptsToExcel(List<ListReceiptResponeMessage> receipts, string filePath)
+		{
+			ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+			using (var package = new ExcelPackage())
+			{
+				var worksheet = package.Workbook.Worksheets.Add("Danh sách phiếu nhập");
+
+				// Header
+				worksheet.Cells[1, 1].Value = "STT";
+				worksheet.Cells[1, 2].Value = "Mã phiếu";
+				worksheet.Cells[1, 3].Value = "Tên kho";
+				worksheet.Cells[1, 4].Value = "Mô tả";
+				worksheet.Cells[1, 5].Value = "Tổng số lượng";
+				worksheet.Cells[1, 6].Value = "Người tạo";
+				worksheet.Cells[1, 7].Value = "Ngày tạo";
+
+				// Format header
+				using (var range = worksheet.Cells[1, 1, 1, 7])
+				{
+					range.Style.Font.Bold = true;
+					range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+					range.Style.Fill.BackgroundColor.SetColor(Color.LightBlue);
+					range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+					range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+				}
+
+				// Data
+				int row = 2;
+				int stt = 1;
+				foreach (var receipt in receipts)
+				{
+					worksheet.Cells[row, 1].Value = stt;
+					worksheet.Cells[row, 2].Value = receipt.ReceiptID;
+					worksheet.Cells[row, 3].Value = receipt.WarehouseName ?? "";
+					worksheet.Cells[row, 4].Value = receipt.WarehouseDescription ?? "";
+					worksheet.Cells[row, 5].Value = receipt.TotalMaterial;
+					worksheet.Cells[row, 6].Value = receipt.CreatedBy ?? "";
+					worksheet.Cells[row, 7].Value = receipt.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "";
+
+					// Format cells
+					worksheet.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+					worksheet.Cells[row, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+					worksheet.Cells[row, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+					worksheet.Cells[row, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+					row++;
+					stt++;
+				}
+
+				// Auto fit columns
+				worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+
+				// Set column widths
+				worksheet.Column(1).Width = 8;  // STT
+				worksheet.Column(2).Width = 12; // Mã phiếu
+				worksheet.Column(3).Width = 20; // Tên kho
+				worksheet.Column(4).Width = 30; // Mô tả
+				worksheet.Column(5).Width = 15; // Tổng số lượng
+				worksheet.Column(6).Width = 20; // Người tạo
+				worksheet.Column(7).Width = 18; // Ngày tạo
+
+				// Set row height for header
+				worksheet.Row(1).Height = 25;
+
+				// Save file
+				var fileInfo = new System.IO.FileInfo(filePath);
+				package.SaveAs(fileInfo);
+			}
 		}
 	}
 }

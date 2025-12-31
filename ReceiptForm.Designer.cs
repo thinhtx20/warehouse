@@ -16,6 +16,7 @@
 		private System.Windows.Forms.Button btnUpdate;
 		private System.Windows.Forms.Button btnDelete;
 		private System.Windows.Forms.Button btnRefresh;
+		private System.Windows.Forms.Button btnExportExcel;
 		private System.Windows.Forms.DataGridView dgvReceipts;
 		/// <summary>
 		/// Clean up any resources being used.
@@ -50,6 +51,7 @@
 			btnUpdate = new Button();
 			btnDelete = new Button();
 			btnRefresh = new Button();
+			btnExportExcel = new Button();
 			dgvReceipts = new DataGridView();
 			groupBox1 = new GroupBox();
 			dgvListReceipt = new DataGridView();
@@ -178,6 +180,19 @@
 			btnRefresh.TabIndex = 11;
 			btnRefresh.Text = "Làm mới";
 			btnRefresh.Click += btnRefresh_Click;
+			// 
+			// btnExportExcel
+			// 
+			btnExportExcel.BackColor = Color.FromArgb(76, 175, 80);
+			btnExportExcel.ForeColor = Color.White;
+			btnExportExcel.Location = new Point(451, 293);
+			btnExportExcel.Margin = new Padding(3, 4, 3, 4);
+			btnExportExcel.Name = "btnExportExcel";
+			btnExportExcel.Size = new Size(114, 40);
+			btnExportExcel.TabIndex = 16;
+			btnExportExcel.Text = "Xuất Excel";
+			btnExportExcel.UseVisualStyleBackColor = false;
+			btnExportExcel.Click += btnExportExcel_Click;
 			// 
 			// dgvReceipts
 			// 
@@ -380,6 +395,7 @@
 			Controls.Add(btnAdd);
 			Controls.Add(btnUpdate);
 			Controls.Add(btnDelete);
+			Controls.Add(btnExportExcel);
 			Controls.Add(btnRefresh);
 			Margin = new Padding(3, 4, 3, 4);
 			Name = "ReceiptForm";
