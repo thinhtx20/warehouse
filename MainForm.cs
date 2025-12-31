@@ -131,6 +131,8 @@ namespace Inventory_manager
 			dgvMaterials.RowHeadersWidth = 51;
 			dgvMaterials.Size = new Size(756, 355);
 			dgvMaterials.TabIndex = 0;
+			dgvMaterials.RowsAdded += dgvMaterials_RowsAdded;
+			dgvMaterials.DataBindingComplete += dgvMaterials_DataBindingComplete;
 			// 
 			// STT
 			// 
@@ -256,6 +258,19 @@ namespace Inventory_manager
 		{
 			dgvMaterials.DataSource = null;
 			dgvMaterials.DataSource = _materialData;
+			// Đánh số STT tự động
+			UpdateSTTColumn();
+		}
+
+		private void UpdateSTTColumn()
+		{
+			foreach (DataGridViewRow row in dgvMaterials.Rows)
+			{
+				if (!row.IsNewRow)
+				{
+					row.Cells["STT"].Value = row.Index + 1;
+				}
+			}
 		}
 
 		private void btnLogout_Click(object sender, EventArgs e)
@@ -268,6 +283,16 @@ namespace Inventory_manager
 		private void btnIssue_Click(object sender, EventArgs e)
 		{
 
+		}
+
+		private void dgvMaterials_RowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
+		{
+			UpdateSTTColumn();
+		}
+
+		private void dgvMaterials_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
+		{
+			UpdateSTTColumn();
 		}
 	}
 }
