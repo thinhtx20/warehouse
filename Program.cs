@@ -1,5 +1,6 @@
 ﻿using Inventory_manager.Models;
 using Inventory_manager.Utili;
+using OfficeOpenXml;
 using System;
 using System.Linq;
 using System.Windows.Forms;
@@ -11,13 +12,13 @@ namespace Inventory_manager
         [STAThread]
         static void Main()
         {
+            // ✅ EPPlus 8+ - set license ĐÚNG CÁCH
+            ExcelPackage.License.SetNonCommercialPersonal("Inventory_manager");
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            // Seed dữ liệu ban đầu
             SeedData();
-
-            // Chạy form login
             Application.Run(new LoginForm());
         }
 
@@ -25,7 +26,6 @@ namespace Inventory_manager
         {
             using var db = new WarehousesManagerContext();
 
-            // 1. Seed admin
             if (!db.Users.Any())
             {
                 db.Users.Add(new User
@@ -38,18 +38,11 @@ namespace Inventory_manager
                 });
             }
 
-            // 2. Seed danh mục vật tư
             if (!db.MaterialCategories.Any())
             {
                 db.MaterialCategories.AddRange(
-                    new MaterialCategory
-                    {
-                        CategoryName = "Danh mục 1"
-                    },
-                    new MaterialCategory
-                    {
-                        CategoryName = "Danh mục 2"
-                    }
+                    new MaterialCategory { CategoryName = "Danh mục 1" },
+                    new MaterialCategory { CategoryName = "Danh mục 2" }
                 );
             }
 
