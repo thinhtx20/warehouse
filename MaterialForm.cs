@@ -187,7 +187,7 @@ namespace Inventory_manager
         {
             // Chặn click header / vùng invalid
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
-            
+
             // Kiểm tra ColumnIndex có hợp lệ không
             if (e.ColumnIndex >= dgvMaterials.Columns.Count) return;
 
@@ -383,7 +383,7 @@ namespace Inventory_manager
             try
             {
                 var searchText = txtSearch.Text.Trim();
-                
+
                 if (string.IsNullOrEmpty(searchText))
                 {
                     // Nếu ô tìm kiếm trống, hiển thị tất cả dữ liệu gốc
@@ -394,20 +394,25 @@ namespace Inventory_manager
                 {
                     // Chuyển đổi searchText sang không dấu và lowercase
                     var searchTextNoAccent = RemoveVietnameseDiacritics(searchText).ToLower();
-                    
+
                     // Filter dữ liệu theo tên vật tư (contains, không phân biệt hoa thường và không dấu)
                     _materialData.Clear();
-                    _materialData.AddRange(_materialDataOriginal.Where(x => 
-                        !string.IsNullOrEmpty(x.MaterialName) && 
+                    _materialData.AddRange(_materialDataOriginal.Where(x =>
+                        !string.IsNullOrEmpty(x.MaterialName) &&
                         RemoveVietnameseDiacritics(x.MaterialName).ToLower().Contains(searchTextNoAccent)));
                 }
-                
+
                 LoadGirdView();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Lỗi khi tìm kiếm: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void dgvMaterials_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
         }
     }
 }

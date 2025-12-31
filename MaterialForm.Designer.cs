@@ -87,6 +87,7 @@ namespace Inventory_manager
             dgvMaterials.Size = new Size(829, 442);
             dgvMaterials.TabIndex = 0;
             dgvMaterials.CellClick += dgvMaterials_CellClick;
+            dgvMaterials.CellContentClick += dgvMaterials_CellContentClick;
             // 
             // materialCick
             // 
@@ -123,8 +124,8 @@ namespace Inventory_manager
             // 
             // weightDataGridViewTextBoxColumn
             // 
-            weightDataGridViewTextBoxColumn.DataPropertyName = "Weight";
-            weightDataGridViewTextBoxColumn.HeaderText = "Khối lượng";
+            weightDataGridViewTextBoxColumn.DataPropertyName = "QuantitySL";
+            weightDataGridViewTextBoxColumn.HeaderText = "Số lượng";
             weightDataGridViewTextBoxColumn.MinimumWidth = 10;
             weightDataGridViewTextBoxColumn.Name = "weightDataGridViewTextBoxColumn";
             weightDataGridViewTextBoxColumn.ReadOnly = true;
