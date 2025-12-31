@@ -28,7 +28,8 @@ namespace Inventory_manager.Services
 					MaterialId = x.MaterialId,
 					MaterialName = x.MaterialName,
 					Unit = x.Unit,
-					QuantitySL = x.Quantity
+					QuantitySL = x.Quantity,
+					Weight = null // Tạm thời set null, sẽ cần thêm Weight vào Material model và database sau
 				}).ToListAsync();
 			foreach (var item in query)
 			{

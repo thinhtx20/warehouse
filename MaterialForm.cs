@@ -118,7 +118,12 @@ namespace Inventory_manager
                     // Áp dụng lại filter nếu có
                     FilterMaterials();
                     // Clear form
-                    btnRefresh_Click(sender, e);
+                    txtDescription.Clear();
+                    txtMaterialName.Clear();
+                    cbbCategory.SelectedIndex = -1;
+                    nbQuantity.Value = 0;
+                    nbUnits.Value = 0;
+                    lstIds.Clear();
                 }
                 else
                 {
@@ -131,15 +136,6 @@ namespace Inventory_manager
             }
         }
 
-        private void btnRefresh_Click(object sender, EventArgs e)
-        {
-            txtDescription.Clear();
-            txtMaterialName.Clear();
-            cbbCategory.SelectedIndex = -1;
-            nbQuantity.Value = 0;
-            nbUnits.Value = 0;
-            lstIds.Clear();
-        }
 
         private async void btnDelete_Click(object sender, EventArgs e)
         {
@@ -191,12 +187,19 @@ namespace Inventory_manager
         {
             // Chặn click header / vùng invalid
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            
+            // Kiểm tra ColumnIndex có hợp lệ không
+            if (e.ColumnIndex >= dgvMaterials.Columns.Count) return;
 
             var row = dgvMaterials.Rows[e.RowIndex];
             if (row.IsNewRow) return;
 
+            // Kiểm tra column có tồn tại không trước khi truy cập
+            var column = dgvMaterials.Columns[e.ColumnIndex];
+            if (column == null) return;
+
             // Nếu click checkbox materialCick thì toggle và thoát
-            if (dgvMaterials.Columns[e.ColumnIndex].Name == "materialCick")
+            if (column.Name == "materialCick")
             {
                 var cell = row.Cells[e.ColumnIndex] as DataGridViewCheckBoxCell;
                 if (cell != null)
@@ -311,7 +314,12 @@ namespace Inventory_manager
                     // Áp dụng lại filter nếu có
                     FilterMaterials();
                     // Clear form
-                    btnRefresh_Click(sender, e);
+                    txtDescription.Clear();
+                    txtMaterialName.Clear();
+                    cbbCategory.SelectedIndex = -1;
+                    nbQuantity.Value = 0;
+                    nbUnits.Value = 0;
+                    lstIds.Clear();
                 }
                 else
                 {

@@ -13,6 +13,7 @@ namespace Inventory_manager.dto.Response
 		public decimal Unit { get; set; }
 		public int Quantity { get; set; }
 		public int QuantitySL { get; set; }
+		public decimal? Weight { get; set; }
         //public int CategoryId { get; set; }
         public string CategoryName { get; set; }
 	}

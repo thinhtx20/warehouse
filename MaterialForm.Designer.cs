@@ -11,7 +11,6 @@ namespace Inventory_manager
 		private System.Windows.Forms.Button btnAdd;
 		private System.Windows.Forms.Button btnUpdate;
 		private System.Windows.Forms.Button btnDelete;
-		private System.Windows.Forms.Button btnRefresh;
 		private System.Windows.Forms.Label lblName;
 		private System.Windows.Forms.Label lblUnit;
 
@@ -33,6 +32,7 @@ namespace Inventory_manager
             materialIdDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             materialNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             unitDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            weightDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             categoryNameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             materialResponeMessageBindingSource = new BindingSource(components);
             lblName = new Label();
@@ -41,7 +41,6 @@ namespace Inventory_manager
             btnAdd = new Button();
             btnUpdate = new Button();
             btnDelete = new Button();
-            btnRefresh = new Button();
             back = new Button();
             groupBox1 = new GroupBox();
             nbUnits = new NumericUpDown();
@@ -77,7 +76,7 @@ namespace Inventory_manager
             dgvMaterials.AutoGenerateColumns = false;
             dgvMaterials.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvMaterials.ColumnHeadersHeight = 29;
-            dgvMaterials.Columns.AddRange(new DataGridViewColumn[] { materialCick, materialIdDataGridViewTextBoxColumn, materialNameDataGridViewTextBoxColumn, unitDataGridViewTextBoxColumn, categoryNameDataGridViewTextBoxColumn });
+            dgvMaterials.Columns.AddRange(new DataGridViewColumn[] { materialCick, materialIdDataGridViewTextBoxColumn, materialNameDataGridViewTextBoxColumn, unitDataGridViewTextBoxColumn, weightDataGridViewTextBoxColumn, categoryNameDataGridViewTextBoxColumn });
             dgvMaterials.DataSource = materialResponeMessageBindingSource;
             dgvMaterials.Dock = DockStyle.Fill;
             dgvMaterials.Location = new Point(3, 35);
@@ -121,6 +120,14 @@ namespace Inventory_manager
             unitDataGridViewTextBoxColumn.MinimumWidth = 10;
             unitDataGridViewTextBoxColumn.Name = "unitDataGridViewTextBoxColumn";
             unitDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // weightDataGridViewTextBoxColumn
+            // 
+            weightDataGridViewTextBoxColumn.DataPropertyName = "Weight";
+            weightDataGridViewTextBoxColumn.HeaderText = "Khối lượng";
+            weightDataGridViewTextBoxColumn.MinimumWidth = 10;
+            weightDataGridViewTextBoxColumn.Name = "weightDataGridViewTextBoxColumn";
+            weightDataGridViewTextBoxColumn.ReadOnly = true;
             // 
             // categoryNameDataGridViewTextBoxColumn
             // 
@@ -190,15 +197,6 @@ namespace Inventory_manager
             btnDelete.UseVisualStyleBackColor = false;
             btnDelete.Click += btnDelete_Click;
             // 
-            // btnRefresh
-            // 
-            btnRefresh.Location = new Point(421, 178);
-            btnRefresh.Name = "btnRefresh";
-            btnRefresh.Size = new Size(100, 40);
-            btnRefresh.TabIndex = 10;
-            btnRefresh.Text = "Làm mới";
-            btnRefresh.Click += btnRefresh_Click;
-            // 
             // back
             // 
             back.Location = new Point(744, 16);
@@ -217,7 +215,6 @@ namespace Inventory_manager
             groupBox1.Controls.Add(txtDescription);
             groupBox1.Controls.Add(label2);
             groupBox1.Controls.Add(label1);
-            groupBox1.Controls.Add(btnRefresh);
             groupBox1.Controls.Add(btnDelete);
             groupBox1.Controls.Add(lblName);
             groupBox1.Controls.Add(btnUpdate);
@@ -339,6 +336,7 @@ namespace Inventory_manager
 		private DataGridViewTextBoxColumn materialIdDataGridViewTextBoxColumn;
 		private DataGridViewTextBoxColumn materialNameDataGridViewTextBoxColumn;
 		private DataGridViewTextBoxColumn unitDataGridViewTextBoxColumn;
+		private DataGridViewTextBoxColumn weightDataGridViewTextBoxColumn;
 		private DataGridViewTextBoxColumn quantityDataGridViewTextBoxColumn;
 		private DataGridViewTextBoxColumn categoryNameDataGridViewTextBoxColumn;
         private TextBox txtSearch;
