@@ -143,32 +143,64 @@ namespace Inventory_manager
 		}
 		private async void dgvListReceipt_CellClick(object sender, DataGridViewCellEventArgs e)
 		{
-			int selectedId = Convert.ToInt32(dgvListReceipt.Rows[e.RowIndex].Cells["dataGridViewTextBoxColumn1"].Value);
 			if (e.RowIndex < 0)
 			{
 				LoadDataGridView();
 				lstIds.Clear();
 				return;
 			}
-			_warehouses.Clear();
-			_warehouses = await _inventoryService.LoadMaterials(selectedId);
-			// Combobox Warehouse
-			cbWarehouse.DataSource = _warehouses;
-			cbWarehouse.DisplayMember = "WarehouseName";
-			cbWarehouse.ValueMember = "WarehouseId";
-			cbWarehouse.SelectedIndex = 0; // chọn mặc định là item click	
+
 			var idClick = Convert.ToInt32(dgvListReceipt.Rows[e.RowIndex].Cells["receiptIDDataGridViewTextBoxColumn"].Value);
+			lstIds.Clear();
 			lstIds.Add(idClick);
+
+			// Lấy thông tin phiếu nhập
+			var receipt = await _inventoryService.GetReceiptById(idClick);
+			if (receipt == null) return;
+
+			// Load mô tả phiếu
+			txtDescription.Text = receipt.Description ?? "";
+
+			// Load ngày tạo
+			if (receipt.CreatedAt.HasValue)
+			{
+				dtCreatedAt.Value = receipt.CreatedAt.Value;
+			}
+
+			// Load warehouse
+			if (receipt.WarehouseId.HasValue)
+			{
+				_warehouses.Clear();
+				_warehouses = await _inventoryService.LoadMaterials(receipt.WarehouseId.Value);
+				cbWarehouse.DataSource = _warehouses;
+				cbWarehouse.DisplayMember = "WarehouseName";
+				cbWarehouse.ValueMember = "WarehouseId";
+				cbWarehouse.SelectedValue = receipt.WarehouseId.Value;
+			}
+
+			// Load danh sách vật tư trong phiếu
 			var lstIdMaterial = await _materialServices.GetMaterialInReceipt(idClick);
-			lstIdMaterial.AddRange(lstIdMaterial);
 			_materialData = await _materialServices.GetMaterialsAsync(lstIdMaterial);
-			// update gridview 
+			
+			// Update gridview 
 			dgvReceipts.DataSource = null;
 			dgvReceipts.DataSource = _materialData;
-			// Tích tất cả checkbox nếu muốn mặc định
+
+			// Load số lượng từ receipt detail vào cột QuantityReceipt và tích checkbox
 			foreach (DataGridViewRow row in dgvReceipts.Rows)
 			{
-				row.Cells["cbDgvReceiptForm"].Value = true;
+				if (row.IsNewRow) continue;
+
+				var materialId = Convert.ToInt32(row.Cells["materialIdDataGridViewTextBoxColumn"].Value);
+				var receiptDetail = receipt.InventoryReceiptDetails.FirstOrDefault(x => x.MaterialId == materialId);
+				
+				if (receiptDetail != null)
+				{
+					// Set số lượng vào cột QuantityReceipt
+					row.Cells["QuantityReceipt"].Value = receiptDetail.Quantity;
+					// Tích checkbox
+					row.Cells["cbDgvReceiptForm"].Value = true;
+				}
 			}
 		}
 

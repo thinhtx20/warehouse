@@ -114,6 +114,17 @@ namespace Inventory_manager.Services
 			return receipts;
 		}
 
+		public async Task<InventoryReceipt> GetReceiptById(int receiptId)
+		{
+			using var _db = new WarehousesManagerContext();
+
+			var receipt = await _db.InventoryReceipts
+				.Include(x => x.InventoryReceiptDetails)
+				.FirstOrDefaultAsync(x => x.ReceiptId == receiptId);
+
+			return receipt;
+		}
+
 		public async Task<bool> UpdateReceipt(ReceiptUpdateRequestModels request)
 		{
 			if (request == null) return false;

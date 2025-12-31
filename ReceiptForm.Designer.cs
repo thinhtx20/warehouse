@@ -291,7 +291,7 @@
 			// 
 			// Quantity
 			// 
-			Quantity.DataPropertyName = "QuantitySL";
+			Quantity.DataPropertyName = "Quantity";
 			Quantity.HeaderText = "Số lượng trong kho";
 			Quantity.MinimumWidth = 6;
 			Quantity.Name = "Quantity";
