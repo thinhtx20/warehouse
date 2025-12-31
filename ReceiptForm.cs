@@ -83,8 +83,9 @@ namespace Inventory_manager
 				var body = new ReceiptRequestModels()
 				{
 					CreatedBy = _currentUser.UserId,
-					Desciptions = txtDescription.SelectedText,
+					Desciptions = txtDescription.Text,
 					WarehouseId = int.Parse(cbWarehouse.SelectedValue.ToString()),
+					CreatedAt = dtCreatedAt.Value,
 					Items = new List<ReceiptItem>()
 				};
 				foreach (DataGridViewRow row in dgvReceipts.Rows)
@@ -94,10 +95,16 @@ namespace Inventory_manager
 					var selected = row.Cells["cbDgvReceiptForm"].Value;
 					if (selected != null && (bool)selected == true)
 					{
+						var quantityReceiptValue = row.Cells["QuantityReceipt"].Value;
+						if (quantityReceiptValue == null || string.IsNullOrEmpty(quantityReceiptValue.ToString()))
+						{
+							MessageBox.Show("Vui lòng nhập số lượng cho vật tư đã chọn", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+							return;
+						}
 						body.Items.Add(new ReceiptItem()
 						{
 							MaterialId = Convert.ToInt32(row.Cells["materialIdDataGridViewTextBoxColumn"].Value),
-							Quantity = Convert.ToInt32(row.Cells["QuantityReceipt"].Value),
+							Quantity = Convert.ToInt32(quantityReceiptValue),
 							UnitPrice = Convert.ToDecimal(row.Cells["unitDataGridViewTextBoxColumn"].Value)
 						});
 					}

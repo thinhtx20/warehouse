@@ -24,7 +24,7 @@ namespace Inventory_manager.Services
 				ReceiptCode = $"PN{DateTime.Now:yyyyMMddHHmmss}",
 				WarehouseId = request.WarehouseId,
 				CreatedBy = request.CreatedBy,
-				CreatedAt = DateTime.Now,
+				CreatedAt = request.CreatedAt ?? DateTime.Now,
 				Description = request.Desciptions
 			};
 

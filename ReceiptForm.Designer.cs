@@ -291,10 +291,11 @@
 			// 
 			// Quantity
 			// 
-			Quantity.DataPropertyName = "Quantity";
+			Quantity.DataPropertyName = "QuantitySL";
 			Quantity.HeaderText = "Số lượng trong kho";
 			Quantity.MinimumWidth = 6;
 			Quantity.Name = "Quantity";
+			Quantity.ReadOnly = true;
 			// 
 			// QuantityReceipt
 			// 
