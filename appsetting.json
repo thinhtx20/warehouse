@@ -1,6 +1,5 @@
 ﻿{
   "ConnectionStrings": {
-    "DefaultConnection": "Data Source=LAPTOP-BSMGBMER;Initial Catalog=warehouses_manager;User ID=sa;Password=123456;Trust Server Certificate=True"
-
+    "DefaultConnection": "Server=.;Database=warehouses_manager;User ID=sa;Password=123456;Encrypt=True;TrustServerCertificate=True"
   }
 }

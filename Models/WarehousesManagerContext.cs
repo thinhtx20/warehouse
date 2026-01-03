@@ -40,9 +40,12 @@ public partial class WarehousesManagerContext : DbContext
         if (!optionsBuilder.IsConfigured)
         {
             optionsBuilder.UseSqlServer(
-                "Data Source=LAPTOP-BSMGBMER;Initial Catalog=warehouses_manager;User ID=sa;Password=123456;Trust Server Certificate=True");
+                "Server=.;Database=warehouses_manager;User ID=sa;Password=123456;Encrypt=True;TrustServerCertificate=True",
+                options => options.EnableRetryOnFailure()
+            );
         }
     }
+
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

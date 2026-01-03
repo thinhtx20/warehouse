@@ -35,6 +35,7 @@ namespace Inventory_manager
 
             LoadDataCombobox();
             LoadDataGridView();
+            UpdateButtonStates();
         }
 
         private async void LoadDataCombobox()
@@ -142,6 +143,7 @@ namespace Inventory_manager
                 MessageBox.Show("Thêm phiếu thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 // load form khi ta
                 ReceiptForm_Load(this, EventArgs.Empty);
+                UpdateButtonStates();
             }
             catch (Exception ex)
             {
@@ -163,6 +165,33 @@ namespace Inventory_manager
                 MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+        private void UpdateButtonStates()
+        {
+            int selectedCount = lstIds?.Count ?? 0;
+
+            if (selectedCount == 1)
+            {
+                // Chọn 1 item: enable nút sửa và xóa, disable nút thêm
+                btnAdd.Enabled = false;
+                btnUpdate.Enabled = true;
+                btnDelete.Enabled = true;
+            }
+            else if (selectedCount > 1)
+            {
+                // Chọn > 1 item: disable nút thêm và nút sửa, chỉ enable nút xóa
+                btnAdd.Enabled = false;
+                btnUpdate.Enabled = false;
+                btnDelete.Enabled = true;
+            }
+            else
+            {
+                // Không chọn gì (0 item): enable nút thêm, disable nút sửa và xóa
+                btnAdd.Enabled = true;
+                btnUpdate.Enabled = false;
+                btnDelete.Enabled = false;
+            }
+        }
+
         private void btnBack_Click(object sender, EventArgs e)
         {
             var mainForm = new MainForm(_currentUser);
@@ -176,12 +205,14 @@ namespace Inventory_manager
             {
                 LoadDataGridView();
                 lstIds.Clear();
+                UpdateButtonStates();
                 return;
             }
 
             var idClick = Convert.ToInt32(dgvListReceipt.Rows[e.RowIndex].Cells["receiptIDDataGridViewTextBoxColumn"].Value);
             lstIds.Clear();
             lstIds.Add(idClick);
+            UpdateButtonStates();
 
             // Lấy thông tin phiếu nhập
             var receipt = await _inventoryService.GetReceiptById(idClick);
@@ -304,6 +335,7 @@ namespace Inventory_manager
                     MessageBox.Show("Cập nhật phiếu thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     // load form khi ta
                     ReceiptForm_Load(this, EventArgs.Empty);
+                    UpdateButtonStates();
                 }
                 else
                 {
@@ -330,6 +362,7 @@ namespace Inventory_manager
                 MessageBox.Show("Xóa phiếu thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 // load form khi ta
                 ReceiptForm_Load(this, EventArgs.Empty);
+                UpdateButtonStates();
             }
             catch (Exception ex)
             {
@@ -370,8 +403,6 @@ namespace Inventory_manager
 
         private void ExportReceiptsToExcel(List<ListReceiptResponeMessage> receipts, string filePath)
         {
-            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-
             using (var package = new ExcelPackage())
             {
                 var worksheet = package.Workbook.Worksheets.Add("Danh sách phiếu nhập");
@@ -391,6 +422,11 @@ namespace Inventory_manager
                     range.Style.Fill.BackgroundColor.SetColor(Color.LightBlue);
                     range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                    // Thêm border cho header
+                    range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+                    range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                    range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+                    range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
                 }
 
                 int row = 2;
@@ -409,6 +445,15 @@ namespace Inventory_manager
                     worksheet.Cells[row, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     worksheet.Cells[row, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     worksheet.Cells[row, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                    // Thêm border cho từng dòng dữ liệu
+                    using (var dataRange = worksheet.Cells[row, 1, row, 7])
+                    {
+                        dataRange.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+                        dataRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                        dataRange.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+                        dataRange.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                    }
 
                     row++;
                     stt++;

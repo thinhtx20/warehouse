@@ -12,8 +12,8 @@ namespace Inventory_manager
         [STAThread]
         static void Main()
         {
-            // ✅ EPPlus 8+ - set license ĐÚNG CÁCH
-            ExcelPackage.License.SetNonCommercialPersonal("Inventory_manager");
+            // Set license cho EPPlus 8+ - sử dụng method SetNonCommercial
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
