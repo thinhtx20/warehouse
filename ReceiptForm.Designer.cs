@@ -15,7 +15,6 @@
 		private System.Windows.Forms.Button btnAdd;
 		private System.Windows.Forms.Button btnUpdate;
 		private System.Windows.Forms.Button btnDelete;
-		private System.Windows.Forms.Button btnRefresh;
 		private System.Windows.Forms.Button btnExportExcel;
 		private System.Windows.Forms.DataGridView dgvReceipts;
 		/// <summary>
@@ -50,7 +49,6 @@
 			btnAdd = new Button();
 			btnUpdate = new Button();
 			btnDelete = new Button();
-			btnRefresh = new Button();
 			btnExportExcel = new Button();
 			dgvReceipts = new DataGridView();
 			groupBox1 = new GroupBox();
@@ -170,16 +168,6 @@
 			btnDelete.TabIndex = 10;
 			btnDelete.Text = "Xóa";
 			btnDelete.Click += btnDelete_Click;
-			// 
-			// btnRefresh
-			// 
-			btnRefresh.Location = new Point(331, 293);
-			btnRefresh.Margin = new Padding(3, 4, 3, 4);
-			btnRefresh.Name = "btnRefresh";
-			btnRefresh.Size = new Size(114, 40);
-			btnRefresh.TabIndex = 11;
-			btnRefresh.Text = "Làm mới";
-			btnRefresh.Click += btnRefresh_Click;
 			// 
 			// btnExportExcel
 			// 
@@ -396,7 +384,6 @@
 			Controls.Add(btnUpdate);
 			Controls.Add(btnDelete);
 			Controls.Add(btnExportExcel);
-			Controls.Add(btnRefresh);
 			Margin = new Padding(3, 4, 3, 4);
 			Name = "ReceiptForm";
 			Text = "Quản lý phiếu nhập hàng";

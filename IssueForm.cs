@@ -86,6 +86,12 @@ namespace Inventory_manager
 
 			dgvListIssue.DataSource = null;
 			dgvListIssue.DataSource = _issueData;
+			
+			// Format cột CreatedAt để hiển thị theo định dạng 24h
+			if (dgvListIssue.Columns["CreatedAt"] != null)
+			{
+				dgvListIssue.Columns["CreatedAt"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm";
+			}
 		}
 
 		private async void dgvListIssue_CellClick(object sender, DataGridViewCellEventArgs e)

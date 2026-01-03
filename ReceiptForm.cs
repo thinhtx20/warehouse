@@ -61,7 +61,12 @@ namespace Inventory_manager
             ///
             dgvListReceipt.DataSource = null;
             dgvListReceipt.DataSource = _receiptData;
-
+            
+            // Format cột CreatedAt để hiển thị theo định dạng 24h
+            if (dgvListReceipt.Columns["CreatedAt"] != null)
+            {
+                dgvListReceipt.Columns["CreatedAt"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm";
+            }
         }
         private void btnAdd_Click(object sender, EventArgs e)
         {
@@ -80,6 +85,9 @@ namespace Inventory_manager
                     CreatedAt = dtCreatedAt.Value,
                     Items = new List<ReceiptItem>()
                 };
+                
+                // Kiểm tra có vật tư nào được chọn không
+                bool hasSelectedMaterial = false;
                 foreach (DataGridViewRow row in dgvReceipts.Rows)
                 {
                     if (row.IsNewRow) continue;
@@ -87,6 +95,7 @@ namespace Inventory_manager
                     var selected = row.Cells["cbDgvReceiptForm"].Value;
                     if (selected != null && (bool)selected == true)
                     {
+                        hasSelectedMaterial = true;
                         var quantityReceiptValue = row.Cells["QuantityReceipt"].Value;
                         if (quantityReceiptValue == null || string.IsNullOrEmpty(quantityReceiptValue.ToString()))
                         {
@@ -96,6 +105,14 @@ namespace Inventory_manager
 
                         var materialId = Convert.ToInt32(row.Cells["materialIdDataGridViewTextBoxColumn"].Value);
                         var quantityReceipt = Convert.ToInt32(quantityReceiptValue);
+
+                        // Kiểm tra số lượng vật tư nhập phải lớn hơn 0
+                        if (quantityReceipt <= 0)
+                        {
+                            var materialName = row.Cells["materialNameDataGridViewTextBoxColumn"].Value?.ToString() ?? "vật tư";
+                            MessageBox.Show($"Số lượng vật tư '{materialName}' nhập phải lớn hơn 0", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
 
                         // Kiểm tra số lượng nhập không được vượt quá số lượng vật tư hiện có
                         var material = _materialData.FirstOrDefault(m => m.MaterialId == materialId);
@@ -113,6 +130,14 @@ namespace Inventory_manager
                         });
                     }
                 }
+                
+                // Kiểm tra có ít nhất một vật tư được chọn
+                if (!hasSelectedMaterial || !body.Items.Any())
+                {
+                    MessageBox.Show("Vui lòng chọn ít nhất một vật tư", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                
                 _inventoryService.CreateReceipt(body);
                 MessageBox.Show("Thêm phiếu thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 // load form khi ta
@@ -313,11 +338,6 @@ namespace Inventory_manager
             }
         }
 
-        private void btnRefresh_Click(object sender, EventArgs e)
-        {
-
-            ReceiptForm_Load(this, EventArgs.Empty);
-        }
 
         private void btnExportExcel_Click(object sender, EventArgs e)
         {
