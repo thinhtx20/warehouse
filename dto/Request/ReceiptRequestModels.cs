@@ -35,6 +35,9 @@ namespace Inventory_manager.dto.Request
 		public int CreatedBy { get; set; }
 
 		public string? Desciptions { get; set; }
+
+		public DateTime? CreatedAt { get; set; }
+
 		public List<IssueItemRequest> Items { get; set; } = new();
 	}
 
@@ -51,6 +54,8 @@ namespace Inventory_manager.dto.Request
 		public int IssueId { get; set; }
 
 		public int WarehouseId { get; set; }
+
+		public string? Desciptions { get; set; }
 
 		public List<IssueItemUpdateRequest> Items { get; set; } = new();
 	}

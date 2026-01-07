@@ -37,6 +37,55 @@ namespace Inventory_manager.Services
 			}
 			return query;
 		}
+		/// <summary>
+		/// Lấy danh sách vật liệu theo kho với số lượng tồn kho trong kho đó
+		/// </summary>
+		/// <param name="warehouseId">ID kho (null nếu không chọn kho)</param>
+		/// <returns>Danh sách vật liệu có trong kho đó</returns>
+		public async Task<List<MaterialResponeMessage>> GetMaterialsByWarehouseAsync(int? warehouseId)
+		{
+			using var _context = new WarehousesManagerContext();
+
+			// Nếu không chọn kho, trả về danh sách rỗng
+			if (!warehouseId.HasValue)
+			{
+				return new List<MaterialResponeMessage>();
+			}
+
+			// Lấy danh sách vật liệu có trong kho được chọn
+			var stocksInWarehouse = await _context.Stocks.AsNoTracking()
+				.Where(s => s.WarehouseId == warehouseId.Value && s.Quantity > 0)
+				.Select(s => s.MaterialId)
+				.Distinct()
+				.ToListAsync();
+
+			if (!stocksInWarehouse.Any())
+			{
+				return new List<MaterialResponeMessage>();
+			}
+
+			var query = await _context.Materials.AsNoTracking()
+				.Include(x => x.Category)
+				.Where(x => x.IsActive == true && stocksInWarehouse.Contains(x.MaterialId))
+				.Select(x => new MaterialResponeMessage
+				{
+					CategoryName = x.Category.CategoryName,
+					MaterialId = x.MaterialId,
+					MaterialName = x.MaterialName,
+					Unit = x.Unit,
+					QuantitySL = x.Quantity,
+				}).ToListAsync();
+
+			// Lấy số lượng tồn kho trong kho được chọn cho từng vật liệu
+			foreach (var item in query)
+			{
+				var stock = await _context.Stocks.AsNoTracking()
+					.FirstOrDefaultAsync(s => s.WarehouseId == warehouseId.Value && s.MaterialId == item.MaterialId);
+				item.Quantity = stock != null ? (int)stock.Quantity.Value : 0;
+			}
+
+			return query;
+		}
 		public async Task<List<int>> GetMaterialInReceipt(int ReceiptId)
 		{
 			using var _context = new WarehousesManagerContext();

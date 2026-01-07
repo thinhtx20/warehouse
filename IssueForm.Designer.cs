@@ -156,7 +156,7 @@
 			dgvListIssue.RowHeadersWidth = 51;
 			dgvListIssue.Size = new Size(586, 218);
 			dgvListIssue.TabIndex = 0;
-			dgvListIssue.CellClick += dgvListIssue_CellClick;
+			dgvListIssue.CellContentClick += dgvListIssue_CellContentClick;
 			// 
 			// groupBox1
 			// 

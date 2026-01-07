@@ -3,6 +3,7 @@ using Inventory_manager.dto.Request;
 using Inventory_manager.dto.Response;
 using Inventory_manager.Models;
 using Inventory_manager.Services;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -23,6 +24,7 @@ namespace Inventory_manager
 		private List<ListIssueResponseMessage> _issueData = new List<ListIssueResponseMessage>();
 		private List<int> lstIds = new List<int>();
 		private List<int> lstIdMaterial = new List<int>();
+		private bool _isLoadingIssue = false; // Flag để tránh conflict khi load issue
 
 		public IssueForm(User user)
 		{
@@ -38,9 +40,14 @@ namespace Inventory_manager
 			try
 			{
 				txtDescription.Clear();
+				dtCreatedAt.Value = DateTime.Now; // Set ngày mặc định là ngày hiện tại
 				await LoadMockData();
 				LoadDataCombobox();
 				LoadDataGridView();
+				// Đăng ký event handler cho combobox warehouse
+				cbWarehouse.SelectedIndexChanged += cbWarehouse_SelectedIndexChanged;
+				// Đăng ký event handler cho validation số lượng
+				dgvIssues.CellEndEdit += dgvIssues_CellEndEdit;
 			}
 			catch (Exception ex)
 			{
@@ -53,7 +60,8 @@ namespace Inventory_manager
 			try
 			{
 				_warehouses = await _issueService.LoadMaterials(null);
-				_materialData = await _materialServices.GetMaterialsAsync(null);
+				// Mặc định không chọn kho thì danh sách vật liệu rỗng
+				_materialData = new List<MaterialResponeMessage>();
 				_issueData = await _issueService.GetIssueAsync();
 			}
 			catch (Exception ex)
@@ -94,64 +102,193 @@ namespace Inventory_manager
 			}
 		}
 
-		private async void dgvListIssue_CellClick(object sender, DataGridViewCellEventArgs e)
+		private async void dgvListIssue_CellContentClick(object sender, DataGridViewCellEventArgs e)
 		{
 			// Chống click header
-			if (e.RowIndex < 0)
-			{
-				LoadDataGridView();
-				lstIds.Clear();
-				return;
-			}
+			if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
 
-			// Lấy selectedId từ DataGridView
-			var valueObj = dgvListIssue.Rows[e.RowIndex].Cells["dataGridViewTextBoxColumn1"].Value;
+			// Chỉ xử lý khi click vào checkbox (cột cbIssue)
+			var column = dgvListIssue.Columns[e.ColumnIndex];
+			if (column == null || column.Name != "cbIssue") return;
+
+			var row = dgvListIssue.Rows[e.RowIndex];
+			if (row.IsNewRow) return;
+
+			// Lấy checkbox cell
+			var checkboxCell = row.Cells["cbIssue"] as DataGridViewCheckBoxCell;
+			if (checkboxCell == null) return;
+
+			// Lấy selectedId từ DataGridView - sử dụng cột IssueIDDataGridViewTextBoxColumn
+			var valueObj = row.Cells["IssueIDDataGridViewTextBoxColumn"].Value;
 			if (valueObj == null) return;
 
 			if (!int.TryParse(valueObj.ToString(), out int selectedId)) return;
 
-			// Reset danh sách kho
-			_warehouses.Clear();
-			_warehouses = await _issueService.LoadMaterials(selectedId);
+			// Toggle checkbox value
+			bool currentValue = (bool?)(checkboxCell.Value) ?? false;
+			checkboxCell.Value = !currentValue;
+			
+			// Commit edit để đảm bảo giá trị checkbox được cập nhật
+			dgvListIssue.CommitEdit(DataGridViewDataErrorContexts.Commit);
 
-			// Gán cho combobox Warehouse
-			cbWarehouse.DataSource = _warehouses;
-			cbWarehouse.DisplayMember = "WarehouseName";
-			cbWarehouse.ValueMember = "WarehouseId";
-			cbWarehouse.SelectedIndex = 0; // chọn mặc định
+			// Đọc lại giá trị sau khi toggle
+			bool isChecked = (bool?)(checkboxCell.Value) ?? false;
 
-			// Clear lstIds và thêm selectedId
-			lstIds.Clear();
-			lstIds.Add(selectedId);
-
-			// Lấy danh sách material theo issue
-			var lstIdMaterial = await _materialServices.GetMaterialInIssue(selectedId);
-			_materialData.Clear();
-			dgvIssues.DataSource = null;
-			if (lstIdMaterial != null && lstIdMaterial.Any())
+			// Nếu uncheck thì clear dữ liệu
+			if (!isChecked)
 			{
-
-				_materialData = await _materialServices.GetMaterialsAsync(lstIdMaterial);
-
-				// Gán dữ liệu lên DataGridView
+				lstIds.Remove(selectedId);
+				// Clear form
+				txtDescription.Clear();
+				dtCreatedAt.Value = DateTime.Now;
+				cbWarehouse.SelectedIndex = -1;
+				_materialData.Clear();
 				dgvIssues.DataSource = null;
 				dgvIssues.DataSource = _materialData;
+				return;
+			}
 
-				// Tick checkbox toàn bộ row (mặc định)
-				foreach (DataGridViewRow row in dgvIssues.Rows)
+			// Nếu đã có issue khác được chọn, uncheck nó
+			if (lstIds.Any() && lstIds.Count == 1 && lstIds[0] != selectedId)
+			{
+				// Uncheck issue cũ
+				foreach (DataGridViewRow r in dgvListIssue.Rows)
 				{
-					var cell = row.Cells["select"] as DataGridViewCheckBoxCell;
-					if (cell != null)
+					if (r.IsNewRow) continue;
+					var oldIdCell = r.Cells["IssueIDDataGridViewTextBoxColumn"];
+					if (oldIdCell != null && oldIdCell.Value != null)
 					{
-						cell.Value = true; // tick checkbox
+						if (int.TryParse(oldIdCell.Value.ToString(), out int oldId) && oldId == lstIds[0])
+						{
+							var oldCheckbox = r.Cells["cbIssue"] as DataGridViewCheckBoxCell;
+							if (oldCheckbox != null)
+							{
+								oldCheckbox.Value = false;
+							}
+						}
+					}
+				}
+				lstIds.Clear();
+			}
+
+			// Lấy warehouse ID từ issue
+			var issue = _issueData.FirstOrDefault(x => x.IssueID == selectedId);
+			if (issue == null || !issue.WarehouseID.HasValue) return;
+
+			int warehouseId = issue.WarehouseID.Value;
+
+			// Set flag để tránh trigger event khi đang load issue
+			_isLoadingIssue = true;
+
+			try
+			{
+				// Reset danh sách kho - load tất cả kho và chọn kho của issue
+				_warehouses = await _issueService.LoadMaterials(null);
+				cbWarehouse.DataSource = _warehouses;
+				cbWarehouse.DisplayMember = "WarehouseName";
+				cbWarehouse.ValueMember = "WarehouseId";
+				
+				// Chọn kho của issue
+				for (int i = 0; i < cbWarehouse.Items.Count; i++)
+				{
+					var warehouse = cbWarehouse.Items[i] as WarehouseMaterialRespone;
+					if (warehouse != null && warehouse.WarehouseId == warehouseId)
+					{
+						cbWarehouse.SelectedIndex = i;
+						break;
+					}
+				}
+
+				// Clear lstIds và thêm selectedId
+				lstIds.Clear();
+				lstIds.Add(selectedId);
+
+				// Load chi tiết issue để lấy description, ngày và số lượng đã xuất
+				using var _db = new WarehousesManagerContext();
+				var issueEntity = await _db.InventoryIssues.AsNoTracking()
+					.Include(x => x.InventoryIssueDetails)
+					.FirstOrDefaultAsync(x => x.IssueId == selectedId);
+
+				if (issueEntity != null)
+				{
+					// Load description vào textbox
+					txtDescription.Text = issueEntity.Description ?? "";
+
+					// Load ngày vào DateTimePicker
+					if (issueEntity.CreatedAt.HasValue)
+					{
+						dtCreatedAt.Value = issueEntity.CreatedAt.Value;
+					}
+					else
+					{
+						dtCreatedAt.Value = DateTime.Now;
+					}
+
+					// Load TẤT CẢ vật liệu trong kho được chọn
+					await LoadMaterialsByWarehouse(preserveIssueData: true);
+
+					// Tính lại số lượng trong kho = số lượng hiện tại + số lượng đã xuất
+					// để hiển thị số lượng ban đầu (trước khi xuất)
+					// Sử dụng for loop thay vì foreach để tránh lỗi khi collection thay đổi
+					for (int i = 0; i < dgvIssues.Rows.Count; i++)
+					{
+						var row1 = dgvIssues.Rows[i];
+						if (row1 == null || row1.IsNewRow) continue;
+
+						try
+						{
+							var materialIdCell = row1.Cells["materialIdDataGridViewTextBoxColumn"];
+							if (materialIdCell == null || materialIdCell.Value == null || materialIdCell.Value == DBNull.Value) continue;
+
+							if (!int.TryParse(materialIdCell.Value.ToString(), out int materialId)) continue;
+
+							var detail = issueEntity.InventoryIssueDetails.FirstOrDefault(x => x.MaterialId == materialId);
+							if (detail == null) continue;
+
+							// Tính lại số lượng ban đầu = số lượng hiện tại + số lượng đã xuất
+							var currentQuantityCell = row1.Cells["Quantity"];
+							if (currentQuantityCell != null && currentQuantityCell.Value != null && currentQuantityCell.Value != DBNull.Value)
+							{
+								if (int.TryParse(currentQuantityCell.Value.ToString(), out int currentQuantity))
+								{
+									// Số lượng ban đầu = số lượng hiện tại + số lượng đã xuất
+									if (detail.Quantity.HasValue)
+									{
+										int originalQuantity = currentQuantity + (int)detail.Quantity.Value;
+										currentQuantityCell.Value = originalQuantity;
+									}
+								}
+							}
+
+							// Tick checkbox
+							var cell = row1.Cells["select"] as DataGridViewCheckBoxCell;
+							if (cell != null)
+							{
+								cell.Value = true;
+							}
+							// Set số lượng đã xuất vào cột Column1
+							if (detail.Quantity.HasValue)
+							{
+                                row1.Cells["Column1"].Value = detail.Quantity.Value;
+							}
+						}
+						catch (Exception ex)
+						{
+							// Log lỗi nhưng tiếp tục xử lý các row khác
+							System.Diagnostics.Debug.WriteLine($"Error processing row {i}: {ex.Message}");
+							continue;
+						}
 					}
 				}
 				dgvIssues.Refresh();
 			}
-
+			finally
+			{
+				_isLoadingIssue = false;
+			}
 		}
 
-		private void btnAdd_Click_1(object sender, EventArgs e)
+		private async void btnAdd_Click_1(object sender, EventArgs e)
 		{
 			try
 			{
@@ -166,9 +303,11 @@ namespace Inventory_manager
 					CreatedBy = _currentUser.UserId,
 					Desciptions = txtDescription.Text,
 					WarehouseId = int.Parse(cbWarehouse.SelectedValue.ToString()),
+					CreatedAt = dtCreatedAt.Value,
 					Items = new List<IssueItemRequest>()
 				};
 
+				bool hasSelectedMaterial = false;
 				foreach (DataGridViewRow row in dgvIssues.Rows)
 				{
 					if (row.IsNewRow) continue;
@@ -176,16 +315,62 @@ namespace Inventory_manager
 					var selected = row.Cells["select"].Value;
 					if (selected != null && (bool)selected == true)
 					{
+						hasSelectedMaterial = true;
+						
+						// Lấy số lượng từ cột Column1 (số lượng nhập)
+						var quantityCell = row.Cells["Column1"];
+						if (quantityCell == null || quantityCell.Value == null || string.IsNullOrEmpty(quantityCell.Value.ToString()))
+						{
+							var materialName = row.Cells["materialNameDataGridViewTextBoxColumn"]?.Value?.ToString() ?? "vật liệu";
+							MessageBox.Show($"Vui lòng nhập số lượng cho '{materialName}'", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+							return;
+						}
+
+						if (!int.TryParse(quantityCell.Value.ToString(), out int quantity) || quantity <= 0)
+						{
+							var materialName = row.Cells["materialNameDataGridViewTextBoxColumn"]?.Value?.ToString() ?? "vật liệu";
+							MessageBox.Show($"Số lượng của '{materialName}' phải là số nguyên lớn hơn 0", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+							return;
+						}
+
+						// Kiểm tra lại số lượng không vượt quá tồn kho
+						var quantityInStockCell = row.Cells["Quantity"];
+						if (quantityInStockCell != null && quantityInStockCell.Value != null)
+						{
+							if (int.TryParse(quantityInStockCell.Value.ToString(), out int stockQuantity))
+							{
+								if (quantity > stockQuantity)
+								{
+									var materialName = row.Cells["materialNameDataGridViewTextBoxColumn"]?.Value?.ToString() ?? "vật liệu";
+									MessageBox.Show($"Số lượng xuất của '{materialName}' ({quantity}) không được lớn hơn số lượng trong kho ({stockQuantity})", 
+										"Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+									return;
+								}
+							}
+						}
+
 						body.Items.Add(new IssueItemRequest()
 						{
 							MaterialId = Convert.ToInt32(row.Cells["materialIdDataGridViewTextBoxColumn"].Value),
-							Quantity = Convert.ToInt32(row.Cells["Quantity"].Value),
+							Quantity = quantity,
 							UnitPrice = Convert.ToDecimal(row.Cells["unitDataGridViewTextBoxColumn"].Value)
 						});
 					}
 				}
 
-				_issueService.CreateIssue(body);
+				if (!hasSelectedMaterial)
+				{
+					MessageBox.Show("Vui lòng chọn ít nhất một vật liệu", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+
+				if (body.Items.Count == 0)
+				{
+					MessageBox.Show("Vui lòng chọn vật liệu và nhập số lượng", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+
+				await _issueService.CreateIssue(body);
 				MessageBox.Show("Thêm phiếu xuất hàng thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 				IssueForm_Load(this, EventArgs.Empty);
@@ -197,7 +382,7 @@ namespace Inventory_manager
 			}
 		}
 
-		private void btnUpdate_Click(object sender, EventArgs e)
+		private async void btnUpdate_Click(object sender, EventArgs e)
 		{
 			try
 			{
@@ -212,30 +397,84 @@ namespace Inventory_manager
 					return;
 				}
 
+				if (cbWarehouse.SelectedValue == null || string.IsNullOrEmpty(cbWarehouse.SelectedValue.ToString()))
+				{
+					MessageBox.Show("Vui lòng chọn kho", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+
 				var body = new IssueUpdateRequestModels()
 				{
 					IssueId = lstIds.First(),
-					WarehouseId = cbWarehouse.SelectedIndex,
+					WarehouseId = int.Parse(cbWarehouse.SelectedValue.ToString()),
+					Desciptions = txtDescription.Text,
 					Items = new List<IssueItemUpdateRequest>()
 				};
 
+				bool hasSelectedMaterial = false;
 				foreach (DataGridViewRow row in dgvIssues.Rows)
 				{
 					if (row.IsNewRow) continue;
 
-					var selected = row.Cells["cbDgvIssueForm"].Value;
+					var selected = row.Cells["select"].Value;
 					if (selected != null && (bool)selected == true)
 					{
+						hasSelectedMaterial = true;
+
+						// Lấy số lượng từ cột Column1 (số lượng nhập)
+						var quantityCell = row.Cells["Column1"];
+						if (quantityCell == null || quantityCell.Value == null || string.IsNullOrEmpty(quantityCell.Value.ToString()))
+						{
+							var materialName = row.Cells["materialNameDataGridViewTextBoxColumn"]?.Value?.ToString() ?? "vật liệu";
+							MessageBox.Show($"Vui lòng nhập số lượng cho '{materialName}'", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+							return;
+						}
+
+						if (!int.TryParse(quantityCell.Value.ToString(), out int quantity) || quantity <= 0)
+						{
+							var materialName = row.Cells["materialNameDataGridViewTextBoxColumn"]?.Value?.ToString() ?? "vật liệu";
+							MessageBox.Show($"Số lượng của '{materialName}' phải là số nguyên lớn hơn 0", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+							return;
+						}
+
+						// Kiểm tra lại số lượng không vượt quá tồn kho
+						var quantityInStockCell = row.Cells["Quantity"];
+						if (quantityInStockCell != null && quantityInStockCell.Value != null)
+						{
+							if (int.TryParse(quantityInStockCell.Value.ToString(), out int stockQuantity))
+							{
+								if (quantity > stockQuantity)
+								{
+									var materialName = row.Cells["materialNameDataGridViewTextBoxColumn"]?.Value?.ToString() ?? "vật liệu";
+									MessageBox.Show($"Số lượng xuất của '{materialName}' ({quantity}) không được lớn hơn số lượng trong kho ({stockQuantity})", 
+										"Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+									return;
+								}
+							}
+						}
+
 						body.Items.Add(new IssueItemUpdateRequest()
 						{
 							MaterialId = Convert.ToInt32(row.Cells["materialIdDataGridViewTextBoxColumn"].Value),
-							Quantity = Convert.ToInt32(row.Cells["Quantity"].Value),
+							Quantity = quantity,
 							UnitPrice = Convert.ToDecimal(row.Cells["unitDataGridViewTextBoxColumn"].Value)
 						});
 					}
 				}
 
-				_issueService.UpdateIssue(body);
+				if (!hasSelectedMaterial)
+				{
+					MessageBox.Show("Vui lòng chọn ít nhất một vật liệu", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+
+				if (body.Items.Count == 0)
+				{
+					MessageBox.Show("Vui lòng chọn vật liệu và nhập số lượng", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+
+				await _issueService.UpdateIssue(body);
 				MessageBox.Show("Cập nhật phiếu xuất hàng thành công", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
 				IssueForm_Load(this, EventArgs.Empty);
@@ -279,6 +518,137 @@ namespace Inventory_manager
 		private void btnRefresh_Click_1(object sender, EventArgs e)
 		{
 			IssueForm_Load(this, EventArgs.Empty);
+		}
+
+		/// <summary>
+		/// Event handler khi chọn kho - load danh sách vật liệu trong kho đó
+		/// </summary>
+		private async void cbWarehouse_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			try
+			{
+				// Chỉ load khi không đang trong quá trình click vào issue cũ
+				if (_isLoadingIssue) return;
+
+				await LoadMaterialsByWarehouse();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
+
+		/// <summary>
+		/// Load tất cả vật liệu trong kho được chọn
+		/// </summary>
+		private async Task LoadMaterialsByWarehouse(bool preserveIssueData = false)
+		{
+			if (cbWarehouse.SelectedValue == null || string.IsNullOrEmpty(cbWarehouse.SelectedValue.ToString()))
+			{
+				// Không chọn kho thì hiển thị mảng rỗng
+				_materialData.Clear();
+				dgvIssues.DataSource = null;
+				dgvIssues.DataSource = _materialData;
+				return;
+			}
+
+			int warehouseId = int.Parse(cbWarehouse.SelectedValue.ToString());
+			// Load TẤT CẢ vật liệu trong kho được chọn
+			_materialData = await _materialServices.GetMaterialsByWarehouseAsync(warehouseId);
+			
+			dgvIssues.DataSource = null;
+			dgvIssues.DataSource = _materialData;
+			
+			if (!preserveIssueData)
+			{
+				// Clear các giá trị số lượng nhập và uncheck checkbox
+				foreach (DataGridViewRow row in dgvIssues.Rows)
+				{
+					if (row.IsNewRow) continue;
+					row.Cells["Column1"].Value = null;
+					var cell = row.Cells["select"] as DataGridViewCheckBoxCell;
+					if (cell != null)
+					{
+						cell.Value = false;
+					}
+				}
+			}
+			dgvIssues.Refresh();
+		}
+
+		/// <summary>
+		/// Validation số lượng nhập không được lớn hơn số lượng trong kho
+		/// </summary>
+		private void dgvIssues_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+		{
+			try
+			{
+				// Chỉ validate cột số lượng (Column1)
+				if (e.ColumnIndex < 0 || e.RowIndex < 0) return;
+				
+				var column = dgvIssues.Columns[e.ColumnIndex];
+				if (column == null || column.Name != "Column1") return;
+
+				var row = dgvIssues.Rows[e.RowIndex];
+				if (row.IsNewRow) return;
+
+				// Kiểm tra đã chọn kho chưa
+				if (cbWarehouse.SelectedValue == null || string.IsNullOrEmpty(cbWarehouse.SelectedValue.ToString()))
+				{
+					row.Cells["Column1"].Value = null;
+					MessageBox.Show("Vui lòng chọn kho trước khi nhập số lượng", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+
+				var quantityCell = row.Cells["Column1"];
+				var quantityInStockCell = row.Cells["Quantity"];
+				var materialIdCell = row.Cells["materialIdDataGridViewTextBoxColumn"];
+
+				if (quantityCell == null || quantityInStockCell == null || materialIdCell == null) return;
+
+				var quantityValue = quantityCell.Value;
+				if (quantityValue == null || string.IsNullOrEmpty(quantityValue.ToString()))
+				{
+					return; // Cho phép để trống
+				}
+
+				if (!int.TryParse(quantityValue.ToString(), out int inputQuantity))
+				{
+					quantityCell.Value = null;
+					MessageBox.Show("Số lượng phải là số nguyên", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+
+				if (inputQuantity <= 0)
+				{
+					quantityCell.Value = null;
+					MessageBox.Show("Số lượng phải lớn hơn 0", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+
+				// Lấy số lượng trong kho
+				var quantityInStock = quantityInStockCell.Value;
+				if (quantityInStock == null || !int.TryParse(quantityInStock.ToString(), out int stockQuantity))
+				{
+					quantityCell.Value = null;
+					MessageBox.Show("Không thể lấy số lượng trong kho", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					return;
+				}
+
+				// Validation: số lượng nhập không được lớn hơn số lượng trong kho
+				if (inputQuantity > stockQuantity)
+				{
+					var materialName = row.Cells["materialNameDataGridViewTextBoxColumn"]?.Value?.ToString() ?? "vật liệu";
+					quantityCell.Value = null;
+					MessageBox.Show($"Số lượng xuất của '{materialName}' không được lớn hơn số lượng trong kho ({stockQuantity})", 
+						"Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
 		}
 	}
 }

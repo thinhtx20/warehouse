@@ -290,7 +290,8 @@ namespace Inventory_manager.Services
 				IssueCode = $"PX{DateTime.Now:yyyyMMddHHmmss}",
 				WarehouseId = request.WarehouseId,
 				CreatedBy = request.CreatedBy,
-				CreatedAt = DateTime.Now
+				CreatedAt = request.CreatedAt ?? DateTime.Now,
+				Description = request.Desciptions
 			};
 
 			foreach (var item in request.Items)
@@ -430,6 +431,11 @@ namespace Inventory_manager.Services
 			}
 
 			issue.InventoryIssueDetails = newDetails;
+			// Cập nhật description nếu có
+			if (!string.IsNullOrEmpty(request.Desciptions))
+			{
+				issue.Description = request.Desciptions;
+			}
 			await _db.SaveChangesAsync();
 
 			return true;
