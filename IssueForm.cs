@@ -4,10 +4,13 @@ using Inventory_manager.dto.Response;
 using Inventory_manager.Models;
 using Inventory_manager.Services;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -518,6 +521,207 @@ namespace Inventory_manager
 		private void btnRefresh_Click_1(object sender, EventArgs e)
 		{
 			IssueForm_Load(this, EventArgs.Empty);
+		}
+
+		/// <summary>
+		/// Xuất Excel cho phiếu xuất hàng đã chọn
+		/// </summary>
+		private async void btnExportExcel_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				if (lstIds == null || !lstIds.Any())
+				{
+					MessageBox.Show("Vui lòng chọn phiếu xuất hàng cần xuất Excel", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+					return;
+				}
+
+				if (lstIds.Count > 1)
+				{
+					MessageBox.Show("Chỉ có thể xuất Excel 1 phiếu xuất hàng tại một thời điểm", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+					return;
+				}
+
+				int issueId = lstIds.First();
+
+				using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+				{
+					saveFileDialog.Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*";
+					saveFileDialog.FilterIndex = 1;
+					saveFileDialog.FileName = $"PhieuXuatHang_{issueId}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+					if (saveFileDialog.ShowDialog() == DialogResult.OK)
+					{
+						await ExportIssueToExcel(issueId, saveFileDialog.FileName);
+						MessageBox.Show("Xuất Excel thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"Lỗi khi xuất Excel: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
+
+		/// <summary>
+		/// Export chi tiết phiếu xuất hàng ra Excel
+		/// </summary>
+		private async Task ExportIssueToExcel(int issueId, string filePath)
+		{
+			using (var package = new ExcelPackage())
+			{
+				using var _db = new WarehousesManagerContext();
+				
+				// Load chi tiết phiếu xuất hàng
+				var issue = await _db.InventoryIssues.AsNoTracking()
+					.Include(x => x.CreatedByNavigation)
+					.Include(x => x.Warehouse)
+					.Include(x => x.InventoryIssueDetails)
+						.ThenInclude(x => x.Material)
+					.FirstOrDefaultAsync(x => x.IssueId == issueId);
+
+				if (issue == null)
+				{
+					throw new Exception("Không tìm thấy phiếu xuất hàng");
+				}
+
+				var worksheet = package.Workbook.Worksheets.Add("Phiếu xuất hàng");
+
+				// Header thông tin phiếu
+				int currentRow = 1;
+				worksheet.Cells[currentRow, 1].Value = "PHIẾU XUẤT HÀNG";
+				worksheet.Cells[currentRow, 1, currentRow, 6].Merge = true;
+				worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+				worksheet.Cells[currentRow, 1].Style.Font.Size = 16;
+				worksheet.Cells[currentRow, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+				currentRow += 2;
+
+				// Thông tin phiếu
+				worksheet.Cells[currentRow, 1].Value = "Mã phiếu:";
+				worksheet.Cells[currentRow, 2].Value = issue.IssueCode ?? "";
+				worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+				currentRow++;
+
+				worksheet.Cells[currentRow, 1].Value = "Kho:";
+				worksheet.Cells[currentRow, 2].Value = issue.Warehouse?.WarehouseName ?? "";
+				worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+				currentRow++;
+
+				worksheet.Cells[currentRow, 1].Value = "Ngày xuất:";
+				worksheet.Cells[currentRow, 2].Value = issue.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "";
+				worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+				currentRow++;
+
+				worksheet.Cells[currentRow, 1].Value = "Người tạo:";
+				worksheet.Cells[currentRow, 2].Value = issue.CreatedByNavigation?.FullName ?? "";
+				worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+				currentRow++;
+
+				if (!string.IsNullOrEmpty(issue.Description))
+				{
+					worksheet.Cells[currentRow, 1].Value = "Mô tả:";
+					worksheet.Cells[currentRow, 2].Value = issue.Description;
+					worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+					currentRow++;
+				}
+
+				currentRow += 1;
+
+				// Header bảng chi tiết
+				worksheet.Cells[currentRow, 1].Value = "STT";
+				worksheet.Cells[currentRow, 2].Value = "Tên vật liệu";
+				worksheet.Cells[currentRow, 3].Value = "Số lượng";
+				worksheet.Cells[currentRow, 4].Value = "Đơn giá";
+				worksheet.Cells[currentRow, 5].Value = "Thành tiền";
+
+				using (var range = worksheet.Cells[currentRow, 1, currentRow, 5])
+				{
+					range.Style.Font.Bold = true;
+					range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+					range.Style.Fill.BackgroundColor.SetColor(Color.LightBlue);
+					range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+					range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+					range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+					range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+					range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+					range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+				}
+
+				currentRow++;
+
+				// Dữ liệu chi tiết
+				int stt = 1;
+				decimal totalAmount = 0;
+
+				foreach (var detail in issue.InventoryIssueDetails.OrderBy(x => x.MaterialId))
+				{
+					decimal quantity = detail.Quantity ?? 0;
+					decimal unitPrice = detail.UnitPrice ?? 0;
+					decimal amount = quantity * unitPrice;
+					totalAmount += amount;
+
+					worksheet.Cells[currentRow, 1].Value = stt;
+					worksheet.Cells[currentRow, 2].Value = detail.Material?.MaterialName ?? "";
+					worksheet.Cells[currentRow, 3].Value = quantity;
+					worksheet.Cells[currentRow, 4].Value = unitPrice;
+					worksheet.Cells[currentRow, 5].Value = amount;
+
+					worksheet.Cells[currentRow, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+					worksheet.Cells[currentRow, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+					worksheet.Cells[currentRow, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+					worksheet.Cells[currentRow, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+					// Format số
+					worksheet.Cells[currentRow, 3].Style.Numberformat.Format = "#,##0";
+					worksheet.Cells[currentRow, 4].Style.Numberformat.Format = "#,##0";
+					worksheet.Cells[currentRow, 5].Style.Numberformat.Format = "#,##0";
+
+					// Border
+					using (var dataRange = worksheet.Cells[currentRow, 1, currentRow, 5])
+					{
+						dataRange.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+						dataRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+						dataRange.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+						dataRange.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+					}
+
+					currentRow++;
+					stt++;
+				}
+
+				// Tổng tiền
+				currentRow++;
+				worksheet.Cells[currentRow, 4].Value = "TỔNG TIỀN:";
+				worksheet.Cells[currentRow, 4].Style.Font.Bold = true;
+				worksheet.Cells[currentRow, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+				worksheet.Cells[currentRow, 5].Value = totalAmount;
+				worksheet.Cells[currentRow, 5].Style.Font.Bold = true;
+				worksheet.Cells[currentRow, 5].Style.Numberformat.Format = "#,##0";
+				worksheet.Cells[currentRow, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+				// Border cho tổng tiền
+				using (var totalRange = worksheet.Cells[currentRow, 4, currentRow, 5])
+				{
+					totalRange.Style.Border.Top.Style = ExcelBorderStyle.Thick;
+					totalRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+					totalRange.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+					totalRange.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+				}
+
+				// Auto fit columns
+				worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+
+				// Set độ rộng cột
+				worksheet.Column(1).Width = 8;
+				worksheet.Column(2).Width = 30;
+				worksheet.Column(3).Width = 15;
+				worksheet.Column(4).Width = 15;
+				worksheet.Column(5).Width = 15;
+
+				worksheet.Row(1).Height = 30;
+
+				package.SaveAs(new FileInfo(filePath));
+			}
 		}
 
 		/// <summary>
