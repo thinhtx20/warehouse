@@ -37,6 +37,7 @@ namespace Inventory_manager.Services
 					UnitPrice = item.UnitPrice
 				});
 
+				// Cập nhật Stock (tồn kho trong kho)
 				var stock = await _db.Stocks
 					.FirstOrDefaultAsync(s => s.WarehouseId == request.WarehouseId && s.MaterialId == item.MaterialId);
 
@@ -55,6 +56,21 @@ namespace Inventory_manager.Services
 				{
 					stock.Quantity += item.Quantity;
 					stock.LastUpdated = DateTime.Now;
+				}
+
+				// Trừ số lượng trong Material (bảng vật tư)
+				var material = await _db.Materials
+					.FirstOrDefaultAsync(m => m.MaterialId == item.MaterialId);
+
+				if (material != null)
+				{
+					// Kiểm tra số lượng có đủ không
+					if (material.Quantity < item.Quantity)
+					{
+						throw new Exception($"Số lượng vật tư '{material.MaterialName}' không đủ. Hiện có: {material.Quantity}, cần: {item.Quantity}");
+					}
+
+					material.Quantity -= item.Quantity;
 				}
 
 				await _db.StockLogs.AddAsync(new StockLog
@@ -137,7 +153,7 @@ namespace Inventory_manager.Services
 
 			if (receipt == null) return false;
 
-			// Hoàn tồn kho cũ
+			// Hoàn tồn kho cũ và hoàn lại số lượng vào Material
 			foreach (var old in receipt.InventoryReceiptDetails)
 			{
 				var stock = await _db.Stocks
@@ -147,6 +163,15 @@ namespace Inventory_manager.Services
 				{
 					stock.Quantity -= old.Quantity;
 					stock.LastUpdated = DateTime.Now;
+				}
+
+				// Hoàn lại số lượng vào Material
+				var material = await _db.Materials
+					.FirstOrDefaultAsync(m => m.MaterialId == old.MaterialId);
+
+				if (material != null)
+				{
+					material.Quantity += old.Quantity;
 				}
 
 				await _db.StockLogs.AddAsync(new StockLog
@@ -178,6 +203,7 @@ namespace Inventory_manager.Services
 
 				newDetails.Add(newDetail);
 
+				// Cập nhật Stock (tồn kho trong kho)
 				var stock = await _db.Stocks
 					.FirstOrDefaultAsync(s => s.WarehouseId == request.WarehouseId && s.MaterialId == item.MaterialId);
 
@@ -196,6 +222,21 @@ namespace Inventory_manager.Services
 				{
 					stock.Quantity += item.Quantity;
 					stock.LastUpdated = DateTime.Now;
+				}
+
+				// Trừ số lượng trong Material (bảng vật tư)
+				var material = await _db.Materials
+					.FirstOrDefaultAsync(m => m.MaterialId == item.MaterialId);
+
+				if (material != null)
+				{
+					// Kiểm tra số lượng có đủ không
+					if (material.Quantity < item.Quantity)
+					{
+						throw new Exception($"Số lượng vật tư '{material.MaterialName}' không đủ. Hiện có: {material.Quantity}, cần: {item.Quantity}");
+					}
+
+					material.Quantity -= item.Quantity;
 				}
 
 				await _db.StockLogs.AddAsync(new StockLog
@@ -255,6 +296,15 @@ namespace Inventory_manager.Services
 					{
 						stock.Quantity -= item.Quantity;
 						stock.LastUpdated = DateTime.Now;
+					}
+
+					// Hoàn lại số lượng vào Material khi xóa phiếu nhập
+					var material = await _db.Materials
+						.FirstOrDefaultAsync(m => m.MaterialId == item.MaterialId);
+
+					if (material != null)
+					{
+						material.Quantity += item.Quantity;
 					}
 
 					await _db.StockLogs.AddAsync(new StockLog
