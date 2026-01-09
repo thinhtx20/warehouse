@@ -15,6 +15,7 @@ namespace Inventory_manager
 		private Button btnMaterials;
 		private readonly MaterialServices _materialServices;
 		private List<MaterialResponeMessage> _materialData = new List<MaterialResponeMessage>();
+		private Form _currentOpenForm = null; // Lưu form đang mở
 		public MainForm(User currentUser)
 		{
 			_currentUser = currentUser;
@@ -221,29 +222,68 @@ namespace Inventory_manager
 
 			btnReceipt.Click += (s, e2) =>
 			{
+				// Đóng form đang mở nếu có
+				if (_currentOpenForm != null && !_currentOpenForm.IsDisposed)
+				{
+					_currentOpenForm.Close();
+					_currentOpenForm.Dispose();
+				}
+
 				this.Hide(); // ẩn MainForm
 				var form = new ReceiptForm(_currentUser);
+				_currentOpenForm = form;
+				form.FormClosed += async (sender, args) =>
+				{
+					_currentOpenForm = null;
+					// Reload dữ liệu trước khi hiện lại MainForm
+					await RefreshData();
+					this.Show(); // hiện lại khi ReceiptForm đóng
+				};
 				form.ShowDialog();
-				this.Show(); // hiện lại khi ReceiptForm đóng
 			};
 
 			btnIssue.Click += (s, e2) =>
 			{
+				// Đóng form đang mở nếu có
+				if (_currentOpenForm != null && !_currentOpenForm.IsDisposed)
+				{
+					_currentOpenForm.Close();
+					_currentOpenForm.Dispose();
+				}
+
 				this.Hide(); // ẩn MainForm
 				var form = new IssueForm(_currentUser);
+				_currentOpenForm = form;
+				form.FormClosed += async (sender, args) =>
+				{
+					_currentOpenForm = null;
+					// Reload dữ liệu trước khi hiện lại MainForm
+					await RefreshData();
+					this.Show(); // hiện lại khi IssueForm đóng
+				};
 				form.ShowDialog();
-
-				this.Show(); // hiện lại khi IssueForm đóng
 			};
 
 			btnMaterials.Click += (s, e2) =>
 			{
-				this.Hide(); // ẩn trước
+				// Đóng form đang mở nếu có
+				if (_currentOpenForm != null && !_currentOpenForm.IsDisposed)
+				{
+					_currentOpenForm.Close();
+					_currentOpenForm.Dispose();
+				}
 
+				this.Hide(); // ẩn MainForm
 				var form = new MaterialForm(_currentUser);
+				_currentOpenForm = form;
+				form.FormClosed += async (sender, args) =>
+				{
+					_currentOpenForm = null;
+					// Reload dữ liệu trước khi hiện lại MainForm
+					await RefreshData();
+					this.Show(); // hiện lại khi MaterialForm đóng
+				};
 				form.ShowDialog();
-
-				this.Show(); // hiện lại khi MaterialForm đóng
 			};
 
 			await LoadMockData();
@@ -260,6 +300,22 @@ namespace Inventory_manager
 			dgvMaterials.DataSource = _materialData;
 			// Đánh số STT tự động
 			UpdateSTTColumn();
+		}
+
+		/// <summary>
+		/// Refresh dữ liệu khi quay lại từ form con
+		/// </summary>
+		private async Task RefreshData()
+		{
+			try
+			{
+				await LoadMockData();
+				LoadDataGridView();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"Lỗi khi tải lại dữ liệu: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
 		}
 
 		private void UpdateSTTColumn()

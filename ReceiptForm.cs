@@ -194,10 +194,8 @@ namespace Inventory_manager
 
         private void btnBack_Click(object sender, EventArgs e)
         {
-            var mainForm = new MainForm(_currentUser);
-            mainForm.Show();
             lstIds.Clear();
-            this.Close();
+            this.Close(); // Chỉ đóng form hiện tại, MainForm sẽ tự động hiện lại
         }
         private async void dgvListReceipt_CellClick(object sender, DataGridViewCellEventArgs e)
         {

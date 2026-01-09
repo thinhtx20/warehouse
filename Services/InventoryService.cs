@@ -37,6 +37,28 @@ namespace Inventory_manager.Services
 					UnitPrice = item.UnitPrice
 				});
 
+				// Trừ số lượng trong Material (bảng vật tư) TRƯỚC
+				// Load Material với tracking để đảm bảo thay đổi được lưu
+				var material = await _db.Materials
+					.FirstOrDefaultAsync(m => m.MaterialId == item.MaterialId);
+
+				if (material == null)
+				{
+					throw new Exception($"Không tìm thấy vật tư với ID: {item.MaterialId}");
+				}
+
+				// Kiểm tra số lượng có đủ không
+				if (material.Quantity < item.Quantity)
+				{
+					throw new Exception($"Số lượng vật tư '{material.MaterialName}' không đủ. Hiện có: {material.Quantity}, cần: {item.Quantity}");
+				}
+
+				// Trừ số lượng - Material được track tự động, sẽ được lưu khi SaveChanges
+				material.Quantity -= item.Quantity;
+				
+				// Đảm bảo Material được đánh dấu là đã thay đổi
+				_db.Entry(material).Property(x => x.Quantity).IsModified = true;
+
 				// Cập nhật Stock (tồn kho trong kho)
 				var stock = await _db.Stocks
 					.FirstOrDefaultAsync(s => s.WarehouseId == request.WarehouseId && s.MaterialId == item.MaterialId);
@@ -56,21 +78,6 @@ namespace Inventory_manager.Services
 				{
 					stock.Quantity += item.Quantity;
 					stock.LastUpdated = DateTime.Now;
-				}
-
-				// Trừ số lượng trong Material (bảng vật tư)
-				var material = await _db.Materials
-					.FirstOrDefaultAsync(m => m.MaterialId == item.MaterialId);
-
-				if (material != null)
-				{
-					// Kiểm tra số lượng có đủ không
-					if (material.Quantity < item.Quantity)
-					{
-						throw new Exception($"Số lượng vật tư '{material.MaterialName}' không đủ. Hiện có: {material.Quantity}, cần: {item.Quantity}");
-					}
-
-					material.Quantity -= item.Quantity;
 				}
 
 				await _db.StockLogs.AddAsync(new StockLog
@@ -172,6 +179,7 @@ namespace Inventory_manager.Services
 				if (material != null)
 				{
 					material.Quantity += old.Quantity;
+					_db.Materials.Update(material); // Đảm bảo Material được đánh dấu là đã thay đổi
 				}
 
 				await _db.StockLogs.AddAsync(new StockLog

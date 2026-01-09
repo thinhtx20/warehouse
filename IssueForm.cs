@@ -512,10 +512,8 @@ namespace Inventory_manager
 
 		private void btnBack_Click_1(object sender, EventArgs e)
 		{
-			var mainForm = new MainForm(_currentUser);
-			mainForm.Show();
 			lstIds.Clear();
-			this.Close();
+			this.Close(); // Chỉ đóng form hiện tại, MainForm sẽ tự động hiện lại
 		}
 
 		private void btnRefresh_Click_1(object sender, EventArgs e)
