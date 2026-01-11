@@ -2,9 +2,11 @@
 using Inventory_manager.dto.Response;
 using Inventory_manager.Models;
 using Inventory_manager.Services;
+using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using System.ComponentModel;
+using System.IO;
 
 namespace Inventory_manager
 {
@@ -370,13 +372,49 @@ namespace Inventory_manager
         }
 
 
-        private void btnExportExcel_Click(object sender, EventArgs e)
+        private async void btnExportExcel_Click(object sender, EventArgs e)
         {
             try
             {
-                if (_receiptData == null || !_receiptData.Any())
+                // Lấy ReceiptID từ checkbox được chọn
+                int? selectedReceiptId = null;
+                
+                if (dgvListReceipt.Rows.Count == 0)
                 {
                     MessageBox.Show("Không có dữ liệu để xuất Excel", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                // Duyệt qua tất cả các dòng trong dgvListReceipt để tìm phiếu được chọn
+                foreach (DataGridViewRow row in dgvListReceipt.Rows)
+                {
+                    if (row.IsNewRow) continue;
+
+                    // Kiểm tra checkbox cbReceipt có được tick không
+                    var checkboxCell = row.Cells["cbReceipt"] as DataGridViewCheckBoxCell;
+                    if (checkboxCell != null && checkboxCell.Value != null)
+                    {
+                        bool isChecked = (bool)checkboxCell.Value;
+                        if (isChecked)
+                        {
+                            // Lấy ReceiptID từ dòng được chọn
+                            var receiptIdCell = row.Cells["receiptIDDataGridViewTextBoxColumn"];
+                            if (receiptIdCell != null && receiptIdCell.Value != null)
+                            {
+                                if (int.TryParse(receiptIdCell.Value.ToString(), out int receiptId))
+                                {
+                                    selectedReceiptId = receiptId;
+                                    break; // Chỉ lấy phiếu đầu tiên được chọn
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Kiểm tra có phiếu nào được chọn không
+                if (!selectedReceiptId.HasValue)
+                {
+                    MessageBox.Show("Vui lòng chọn một phiếu nhập hàng để xuất Excel", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -384,11 +422,11 @@ namespace Inventory_manager
                 {
                     saveFileDialog.Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*";
                     saveFileDialog.FilterIndex = 1;
-                    saveFileDialog.FileName = $"DanhSachPhieuNhap_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                    saveFileDialog.FileName = $"PhieuNhapHang_{selectedReceiptId.Value}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
                     if (saveFileDialog.ShowDialog() == DialogResult.OK)
                     {
-                        ExportReceiptsToExcel(_receiptData, saveFileDialog.FileName);
+                        await ExportReceiptToExcel(selectedReceiptId.Value, saveFileDialog.FileName);
                         MessageBox.Show("Xuất Excel thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
@@ -399,53 +437,121 @@ namespace Inventory_manager
             }
         }
 
-        private void ExportReceiptsToExcel(List<ListReceiptResponeMessage> receipts, string filePath)
+        /// <summary>
+        /// Xuất Excel cho phiếu nhập hàng đã chọn với chi tiết vật tư và tổng tiền
+        /// </summary>
+        private async Task ExportReceiptToExcel(int receiptId, string filePath)
         {
             using (var package = new ExcelPackage())
             {
-                var worksheet = package.Workbook.Worksheets.Add("Danh sách phiếu nhập");
+                using var _db = new WarehousesManagerContext();
+                
+                // Load chi tiết phiếu nhập hàng
+                var receipt = await _db.InventoryReceipts.AsNoTracking()
+                    .Include(x => x.CreatedByNavigation)
+                    .Include(x => x.Warehouse)
+                    .Include(x => x.InventoryReceiptDetails)
+                        .ThenInclude(x => x.Material)
+                    .FirstOrDefaultAsync(x => x.ReceiptId == receiptId);
 
-                worksheet.Cells[1, 1].Value = "STT";
-                worksheet.Cells[1, 2].Value = "Mã phiếu";
-                worksheet.Cells[1, 3].Value = "Tên kho";
-                worksheet.Cells[1, 4].Value = "Mô tả";
-                worksheet.Cells[1, 5].Value = "Tổng số lượng";
-                worksheet.Cells[1, 6].Value = "Người tạo";
-                worksheet.Cells[1, 7].Value = "Ngày tạo";
+                if (receipt == null)
+                {
+                    throw new Exception("Không tìm thấy phiếu nhập hàng");
+                }
 
-                using (var range = worksheet.Cells[1, 1, 1, 7])
+                var worksheet = package.Workbook.Worksheets.Add("Phiếu nhập hàng");
+
+                // Header thông tin phiếu
+                int currentRow = 1;
+                worksheet.Cells[currentRow, 1].Value = "PHIẾU NHẬP HÀNG";
+                worksheet.Cells[currentRow, 1, currentRow, 6].Merge = true;
+                worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+                worksheet.Cells[currentRow, 1].Style.Font.Size = 16;
+                worksheet.Cells[currentRow, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                currentRow += 2;
+
+                // Thông tin phiếu
+                worksheet.Cells[currentRow, 1].Value = "Mã phiếu:";
+                worksheet.Cells[currentRow, 2].Value = receipt.ReceiptCode ?? "";
+                worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+                currentRow++;
+
+                worksheet.Cells[currentRow, 1].Value = "Kho:";
+                worksheet.Cells[currentRow, 2].Value = receipt.Warehouse?.WarehouseName ?? "";
+                worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+                currentRow++;
+
+                worksheet.Cells[currentRow, 1].Value = "Ngày nhập:";
+                worksheet.Cells[currentRow, 2].Value = receipt.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "";
+                worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+                currentRow++;
+
+                worksheet.Cells[currentRow, 1].Value = "Người tạo:";
+                worksheet.Cells[currentRow, 2].Value = receipt.CreatedByNavigation?.FullName ?? "";
+                worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+                currentRow++;
+
+                if (!string.IsNullOrEmpty(receipt.Description))
+                {
+                    worksheet.Cells[currentRow, 1].Value = "Mô tả:";
+                    worksheet.Cells[currentRow, 2].Value = receipt.Description;
+                    worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+                    currentRow++;
+                }
+
+                currentRow += 1;
+
+                // Header bảng chi tiết
+                worksheet.Cells[currentRow, 1].Value = "STT";
+                worksheet.Cells[currentRow, 2].Value = "Tên vật liệu";
+                worksheet.Cells[currentRow, 3].Value = "Số lượng";
+                worksheet.Cells[currentRow, 4].Value = "Đơn giá";
+                worksheet.Cells[currentRow, 5].Value = "Thành tiền";
+
+                using (var range = worksheet.Cells[currentRow, 1, currentRow, 5])
                 {
                     range.Style.Font.Bold = true;
                     range.Style.Fill.PatternType = ExcelFillStyle.Solid;
                     range.Style.Fill.BackgroundColor.SetColor(Color.LightBlue);
                     range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-                    // Thêm border cho header
                     range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
                     range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
                     range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
                     range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
                 }
 
-                int row = 2;
+                currentRow++;
+
+                // Dữ liệu chi tiết
                 int stt = 1;
-                foreach (var receipt in receipts)
+                decimal totalAmount = 0;
+
+                foreach (var detail in receipt.InventoryReceiptDetails.OrderBy(x => x.MaterialId))
                 {
-                    worksheet.Cells[row, 1].Value = stt;
-                    worksheet.Cells[row, 2].Value = receipt.ReceiptID;
-                    worksheet.Cells[row, 3].Value = receipt.WarehouseName ?? "";
-                    worksheet.Cells[row, 4].Value = receipt.WarehouseDescription ?? "";
-                    worksheet.Cells[row, 5].Value = receipt.TotalMaterial;
-                    worksheet.Cells[row, 6].Value = receipt.CreatedBy ?? "";
-                    worksheet.Cells[row, 7].Value = receipt.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "";
+                    int quantity = detail.Quantity;
+                    decimal unitPrice = detail.UnitPrice ?? 0;
+                    decimal amount = quantity * unitPrice;
+                    totalAmount += amount;
 
-                    worksheet.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                    worksheet.Cells[row, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                    worksheet.Cells[row, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                    worksheet.Cells[row, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    worksheet.Cells[currentRow, 1].Value = stt;
+                    worksheet.Cells[currentRow, 2].Value = detail.Material?.MaterialName ?? "";
+                    worksheet.Cells[currentRow, 3].Value = quantity;
+                    worksheet.Cells[currentRow, 4].Value = unitPrice;
+                    worksheet.Cells[currentRow, 5].Value = amount;
 
-                    // Thêm border cho từng dòng dữ liệu
-                    using (var dataRange = worksheet.Cells[row, 1, row, 7])
+                    worksheet.Cells[currentRow, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    worksheet.Cells[currentRow, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                    worksheet.Cells[currentRow, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                    worksheet.Cells[currentRow, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+                    // Format số
+                    worksheet.Cells[currentRow, 3].Style.Numberformat.Format = "#,##0";
+                    worksheet.Cells[currentRow, 4].Style.Numberformat.Format = "#,##0";
+                    worksheet.Cells[currentRow, 5].Style.Numberformat.Format = "#,##0";
+
+                    // Border
+                    using (var dataRange = worksheet.Cells[currentRow, 1, currentRow, 5])
                     {
                         dataRange.Style.Border.Top.Style = ExcelBorderStyle.Thin;
                         dataRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
@@ -453,19 +559,38 @@ namespace Inventory_manager
                         dataRange.Style.Border.Right.Style = ExcelBorderStyle.Thin;
                     }
 
-                    row++;
+                    currentRow++;
                     stt++;
                 }
 
+                // Tổng tiền
+                currentRow++;
+                worksheet.Cells[currentRow, 4].Value = "TỔNG TIỀN:";
+                worksheet.Cells[currentRow, 4].Style.Font.Bold = true;
+                worksheet.Cells[currentRow, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                worksheet.Cells[currentRow, 5].Value = totalAmount;
+                worksheet.Cells[currentRow, 5].Style.Font.Bold = true;
+                worksheet.Cells[currentRow, 5].Style.Numberformat.Format = "#,##0";
+                worksheet.Cells[currentRow, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+                // Border cho tổng tiền
+                using (var totalRange = worksheet.Cells[currentRow, 4, currentRow, 5])
+                {
+                    totalRange.Style.Border.Top.Style = ExcelBorderStyle.Thick;
+                    totalRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                    totalRange.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+                    totalRange.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                }
+
+                // Auto fit columns
                 worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
 
+                // Set độ rộng cột
                 worksheet.Column(1).Width = 8;
-                worksheet.Column(2).Width = 12;
-                worksheet.Column(3).Width = 20;
-                worksheet.Column(4).Width = 30;
-                worksheet.Column(5).Width = 15;
-                worksheet.Column(6).Width = 20;
-                worksheet.Column(7).Width = 18;
+                worksheet.Column(2).Width = 30;
+                worksheet.Column(3).Width = 15;
+                worksheet.Column(4).Width = 15;
+                worksheet.Column(5).Width = 18;
 
                 worksheet.Row(1).Height = 25;
 
