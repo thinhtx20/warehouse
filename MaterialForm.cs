@@ -32,6 +32,8 @@ namespace Inventory_manager
             InitializeComponent();
             // Gán event handlers cho tìm kiếm
             txtSearch.TextChanged += txtSearch_TextChanged;
+            // Thêm xử lý lỗi cho DataGridView
+            dgvMaterials.DataError += DgvMaterials_DataError;
             this.Load += FormLoad;
         }
         public async void FormLoad(object sender, EventArgs e)
@@ -61,9 +63,45 @@ namespace Inventory_manager
         }
         public void LoadGirdView()
         {
-            dgvMaterials.DataSource = null;
-            dgvMaterials.DataSource = _materialData;
-            ///
+            try
+            {
+                // Suspend layout để tránh lỗi khi reload
+                dgvMaterials.SuspendLayout();
+                
+                // Clear selection và data source
+                dgvMaterials.ClearSelection();
+                dgvMaterials.DataSource = null;
+                
+                // Bind lại dữ liệu
+                if (_materialData != null && _materialData.Any())
+                {
+                    dgvMaterials.DataSource = _materialData;
+                }
+                else
+                {
+                    dgvMaterials.DataSource = new List<MaterialResponeMessage>();
+                }
+                
+                // Resume layout
+                dgvMaterials.ResumeLayout();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi load DataGridView: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Xử lý lỗi DataGridView để tránh hiển thị dialog mặc định
+        /// </summary>
+        private void DgvMaterials_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        {
+            // Bỏ qua lỗi và không hiển thị dialog mặc định
+            e.ThrowException = false;
+            
+            // Log lỗi nếu cần (có thể bỏ qua trong production)
+            // MessageBox.Show($"Lỗi DataGridView tại cột {e.ColumnIndex}, hàng {e.RowIndex}: {e.Exception.Message}", 
+            //     "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
         private async void btnAdd_Click(object sender, EventArgs e)
         {
@@ -308,18 +346,19 @@ namespace Inventory_manager
                 {
                     MessageBox.Show("Sửa vật tư thành công", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     lstIds.Clear();
-                    // Load lại dữ liệu mới nhất
-                    await LoadData();
-                    LoadCombobox();
-                    // Áp dụng lại filter nếu có
-                    FilterMaterials();
-                    // Clear form
+                    
+                    // Clear form trước
                     txtDescription.Clear();
                     txtMaterialName.Clear();
                     cbbCategory.SelectedIndex = -1;
                     nbQuantity.Value = 0;
                     nbUnits.Value = 0;
-                    lstIds.Clear();
+                    
+                    // Load lại dữ liệu mới nhất
+                    await LoadData();
+                    LoadCombobox();
+                    // Áp dụng lại filter nếu có
+                    FilterMaterials();
                 }
                 else
                 {
